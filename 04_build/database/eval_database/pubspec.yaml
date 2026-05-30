@@ -1,0 +1,12 @@
+name: caliber_eval_database
+description: Caliber Eval Cluster module 05, per-user memory writes.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  caliber_eval_backend: ^0.1.0
