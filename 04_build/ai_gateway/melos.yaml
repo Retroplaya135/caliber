@@ -1,0 +1,24 @@
+name: caliber_ai_gateway
+
+packages:
+  - .
+
+scripts:
+  analyze:
+    description: Run Gateway Core static guardrails.
+    run: ./bin/melos run analyze
+  test:
+    description: Run Gateway Core tests with coverage.
+    run: ./bin/melos run test
+  golden:
+    description: Verify Gateway Core deterministic golden outputs.
+    run: ./bin/melos run golden
+  guardrails:
+    description: Run every Gateway Core guardrail.
+    run: ./bin/melos run guardrails
+  profile:
+    description: Profile deterministic Gateway Core cache behavior.
+    run: ./bin/melos run profile
+  codegen:
+    description: Verify no gateway codegen is required.
+    run: ./bin/melos run codegen
