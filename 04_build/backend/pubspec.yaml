@@ -1,0 +1,9 @@
+name: caliber_eval_backend
+description: Caliber Eval Cluster module 04, deterministic corpus retrieval.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+resolution: workspace
