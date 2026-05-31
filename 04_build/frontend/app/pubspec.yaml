@@ -1,0 +1,34 @@
+name: caliber_app_runner
+description: Caliber runnable Flutter app composition package.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.35.0"
+
+resolution: workspace
+
+dependencies:
+  caliber_app_shell: ^0.1.0
+  caliber_app_state: ^0.1.0
+  caliber_auth: ^0.1.0
+  caliber_design_system: ^0.1.0
+  caliber_gateway_client: ^0.1.0
+  caliber_interview: ^0.1.0
+  caliber_screens: ^0.1.0
+  caliber_shared: ^0.1.0
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.0.3
+  flutter_secure_storage: ^10.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
