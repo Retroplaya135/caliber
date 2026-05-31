@@ -1,0 +1,45 @@
+name: caliber_design_system
+description: Caliber Glass Kit design-system contract, themes, primitives, components, catalog, and tests.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.35.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  widgetbook: any
+  widgetbook_annotation: any
+
+flutter:
+  uses-material-design: true
+
+dev_dependencies:
+  build_runner: any
+  flutter_lints: any
+  flutter_test:
+    sdk: flutter
+  melos: any
+  widgetbook_generator: any
+
+melos:
+  scripts:
+    analyze:
+      run: flutter analyze
+      description: Analyze the Glass Kit package.
+    test:
+      run: flutter test --coverage
+      description: Run Glass Kit tests and collect coverage for new code.
+    raw-style-ban:
+      run: dart run tool/raw_style_ban.dart
+      description: Fail if raw colors or style sizes appear outside token files.
+    guardrails:
+      run: dart run tool/raw_style_ban.dart
+      description: Run local design-system guardrails.
+    goldens:update:
+      run: flutter test --update-goldens test/golden
+      description: Refresh deterministic Glass Kit golden baselines.
