@@ -1,0 +1,16 @@
+name: caliber_eval_frontend
+description: Caliber Eval Cluster module 06, interview evaluation engine.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  caliber_eval_backend: ^0.1.0
+  caliber_eval_database: ^0.1.0
+dev_dependencies:
+  test: ^1.31.0
+  coverage: ^1.15.0
