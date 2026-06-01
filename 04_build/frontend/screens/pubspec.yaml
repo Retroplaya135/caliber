@@ -1,0 +1,29 @@
+name: caliber_screens
+description: Caliber wedge, interview, and shell route screens.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.35.0"
+
+resolution: workspace
+
+dependencies:
+  caliber_app_shell: ^0.1.0
+  caliber_design_system: ^0.1.0
+  caliber_interview: ^0.1.0
+  caliber_prep_brief: ^0.1.0
+  caliber_shared: ^0.1.0
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.5.3
+
+dev_dependencies:
+  caliber_gateway_client: ^0.1.0
+  flutter_test:
+    sdk: flutter
+  lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
