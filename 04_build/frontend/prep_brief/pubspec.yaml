@@ -1,0 +1,17 @@
+name: caliber_prep_brief
+description: Deterministic JD to prep brief wedge for Caliber.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  caliber_eval_backend: ^0.1.0
+  caliber_interview: ^0.1.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.31.0
