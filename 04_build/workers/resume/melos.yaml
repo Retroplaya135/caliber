@@ -1,0 +1,22 @@
+name: caliber_resume_worker
+packages:
+  - .
+scripts:
+  analyze:
+    run: python3 -m resume_worker.tools.analyze
+    description: Compile and statically inspect the Resume Evidence worker.
+  test:
+    run: python3 -m resume_worker.tools.test --coverage
+    description: Run unit tests and stdlib trace coverage for the Resume Evidence worker.
+  profile:
+    run: python3 -m resume_worker.tools.profile
+    description: Run timing evidence for parse, rewrite review, and ATS harness paths.
+  guardrails:
+    run: python3 -m resume_worker.tools.guardrails
+    description: Run worker-local handoff, profile, secret, and TLS guardrails.
+  upstream-contracts:
+    run: python3 -m resume_worker.tools.upstream_contracts
+    description: Read-only probe for Schema Core and Gateway Core Resume Evidence compatibility.
+  upstream-contracts-strict:
+    run: python3 -m resume_worker.tools.upstream_contracts --fail-on-blocker
+    description: Fail when Schema Core or Gateway Core are not Resume Evidence compatible.
