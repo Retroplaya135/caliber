@@ -1,0 +1,9 @@
+# Product runtime model pin for the gateway adapter.
+provider_adapter:
+  default_model: "gpt-5.4-mini"
+  strict_structured_outputs: true
+  gateway_only: true
+  notes:
+    - "Client code must never call model vendors directly."
+    - "Runtime model selection is configured at the gateway boundary."
+
