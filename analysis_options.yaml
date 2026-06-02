@@ -1,0 +1,29 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+    missing_required_param: error
+    missing_return: error
+
+linter:
+  rules:
+    avoid_print: true
+    prefer_final_locals: true
+    unawaited_futures: true
+
+dcm:
+  metrics:
+    cyclomatic-complexity: 12
+    maximum-nesting-level: 4
+    number-of-parameters: 5
+    number-of-imports: 12
+    source-lines-of-code: 400
+  rules:
+    - always-remove-listener
+    - dispose-fields
+    - prefer-match-file-name
+    - avoid-unnecessary-setstate
+    - avoid-returning-widgets
+    - avoid-hardcoded-color
+    - avoid-unnecessary-type-casts
