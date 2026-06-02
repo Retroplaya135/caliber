@@ -1,0 +1,21 @@
+name: caliber_shared_workspace
+
+packages:
+  - .
+
+scripts:
+  analyze:
+    run: dart analyze .
+    description: Analyze the frozen Schema Core package.
+
+  test:
+    run: dart test --coverage=coverage
+    description: Run Schema Core tests with VM coverage collection.
+
+  codegen:
+    run: dart run build_runner build --delete-conflicting-outputs
+    description: Generate Freezed and json_serializable outputs.
+
+  guardrails:
+    run: dart test test/guardrails
+    description: Run Schema Core boundary and version guardrails.
