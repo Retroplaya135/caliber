@@ -1,0 +1,50 @@
+# version: 1
+# Lane G owns these static boundaries. The Python gate enforces the rules today;
+# DCM/custom_lint can consume the same intent when product packages arrive.
+rules:
+  domain_purity:
+    message: "CALIBER-LINT-001 domain-purity: domain code must not import Flutter or data-layer packages"
+    include:
+      - "packages/**/domain/**/*.dart"
+    banned_imports:
+      - "package:flutter/"
+      - "/data/"
+      - "package:caliber_data/"
+  repository_boundary:
+    message: "CALIBER-LINT-002 repository-boundary: UI may depend on repository interfaces only, never concrete repositories/services"
+    include:
+      - "apps/**/*.dart"
+      - "packages/**/presentation/**/*.dart"
+      - "packages/**/ui/**/*.dart"
+    banned_tokens:
+      - "ConcreteRepository"
+      - "HttpService("
+      - "SqliteRepository("
+      - "implements Repository"
+  raw_style_ban:
+    message: "CALIBER-LINT-003 raw-style-ban: use design tokens instead of raw Color/size literals"
+    include:
+      - "apps/**/*.dart"
+      - "packages/**/presentation/**/*.dart"
+      - "packages/design_system/lib/**/*.dart"
+    banned_patterns:
+      - "Color\\(0x[0-9A-Fa-f]{8}\\)"
+      - "SizedBox\\((?:width|height):\\s*[0-9]"
+      - "EdgeInsets\\.all\\([0-9]"
+  disposal:
+    message: "CALIBER-LINT-004 disposal: classes creating controllers/subscriptions must implement dispose"
+    include:
+      - "apps/**/*.dart"
+      - "packages/**/*.dart"
+    allocation_tokens:
+      - "TextEditingController("
+      - "StreamController("
+      - "AnimationController("
+      - ".listen("
+  banned_imports:
+    message: "CALIBER-LINT-005 banned-import: package boundary violation"
+    pairs:
+      - importer: "packages/**/domain/**/*.dart"
+        import_contains: "package:flutter/"
+      - importer: "packages/**/presentation/**/*.dart"
+        import_contains: "package:caliber_app/gateway"
