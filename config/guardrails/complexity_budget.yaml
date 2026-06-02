@@ -1,0 +1,10 @@
+# version: 1
+budgets:
+  dart:
+    max_lines_per_file: 400
+    max_imports_per_file: 12
+    max_nesting_depth: 4
+  python:
+    max_lines_per_file: 450
+    max_function_lines: 80
+    max_branch_points: 12
