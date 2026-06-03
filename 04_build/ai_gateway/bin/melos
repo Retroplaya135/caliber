@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Package-local Melos shim for Gateway Core validation.
+
+The root Lane G branch owns repository-wide Melos. This shim keeps the Fork 03
+validation command shape available without editing outside 04_build/ai_gateway.
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+import os
+import shutil
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_MODULES = ("coverage", "fastapi", "pydantic", "pytest", "yaml")
+
+
+def can_import_required_modules(interpreter: str) -> bool:
+    probe = "; ".join(f"import {module}" for module in REQUIRED_MODULES)
+    return (
+        subprocess.run(
+            [interpreter, "-c", probe],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+        == 0
+    )
+
+
+def candidate_interpreters() -> list[str]:
+    candidates = [
+        os.environ.get("PYTHON", "").strip(),
+        sys.executable,
+        "/opt/anaconda3/bin/python",
+        shutil.which("python3") or "",
+        shutil.which("python") or "",
+    ]
+    seen: set[str] = set()
+    unique: list[str] = []
+    for candidate in candidates:
+        if candidate and candidate not in seen:
+            unique.append(candidate)
+            seen.add(candidate)
+    return unique
+
+
+def resolve_python() -> str:
+    explicit = os.environ.get("PYTHON", "").strip()
+    if explicit:
+        return explicit
+    for candidate in candidate_interpreters():
+        if can_import_required_modules(candidate):
+            return candidate
+    print(
+        "CALIBER-GATEWAY-MELOS-003: no Python interpreter with gateway dev dependencies "
+        f"available; checked: {', '.join(candidate_interpreters())}",
+        file=sys.stderr,
+    )
+    return sys.executable
+
+
+SCRIPTS = {
+    "analyze": ["tool/gateway_guardrails.py", "analyze"],
+    "test": ["tool/gateway_guardrails.py", "test"],
+    "golden": ["tool/gateway_guardrails.py", "golden"],
+    "guardrails": ["tool/gateway_guardrails.py", "all"],
+    "profile": ["tool/profile_gateway.py"],
+    "codegen": ["tool/gateway_guardrails.py", "codegen"],
+}
+
+
+def main(argv: list[str]) -> int:
+    if argv in (["--version"], ["version"]):
+        print("melos-shim 0.1.0 (caliber gateway package)")
+        return 0
+
+    if len(argv) < 2 or argv[0] != "run":
+        print("CALIBER-GATEWAY-MELOS-001: expected `melos run <script>`", file=sys.stderr)
+        return 2
+
+    script = argv[1]
+    if script not in SCRIPTS:
+        print(f"CALIBER-GATEWAY-MELOS-002: unknown script `{script}`", file=sys.stderr)
+        return 2
+
+    return subprocess.call([resolve_python(), *SCRIPTS[script], *argv[2:]], cwd=ROOT)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
