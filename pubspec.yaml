@@ -1,0 +1,58 @@
+name: caliber_workspace
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+workspace:
+  - 04_build/backend
+  - 04_build/database/eval_database
+  - 04_build/database/storage_sync
+  - 04_build/design_system
+  - 04_build/frontend/app_shell
+  - 04_build/frontend/app
+  - 04_build/frontend/interview
+  - 04_build/frontend/prep_brief
+  - 04_build/frontend/app_state
+  - 04_build/frontend/auth
+  - 04_build/frontend/eval
+  - 04_build/frontend/gateway_client
+  - 04_build/frontend/screens
+  - 04_build/integrations/speech_stack
+  - 04_build/shared
+
+dev_dependencies:
+  melos: ^7.3.0
+
+melos:
+  packages:
+    - 04_build/backend
+    - 04_build/database/eval_database
+    - 04_build/database/storage_sync
+    - 04_build/design_system
+    - 04_build/frontend/app_shell
+    - 04_build/frontend/app
+    - 04_build/frontend/interview
+    - 04_build/frontend/prep_brief
+    - 04_build/frontend/app_state
+    - 04_build/frontend/auth
+    - 04_build/frontend/eval
+    - 04_build/frontend/gateway_client
+    - 04_build/frontend/screens
+    - 04_build/integrations/speech_stack
+    - 04_build/shared
+  scripts:
+    analyze:
+      run: dart run melos exec --scope=caliber_storage_sync -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_design_system -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_app_shell -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_app_runner -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_interview -- "dart analyze ." && dart run melos exec --scope=caliber_prep_brief -- "dart analyze ." && dart run melos exec --scope=caliber_screens -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_app_state -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_auth -- "flutter analyze --fatal-infos" && dart run melos exec --scope=caliber_eval_backend -- "dart analyze ." && dart run melos exec --scope=caliber_eval_database -- "dart analyze ." && dart run melos exec --scope=caliber_eval_frontend -- "dart analyze ." && dart run melos exec --scope=caliber_gateway_client -- "dart analyze ." && dart run melos exec --scope=caliber_shared -- "dart analyze ." && dart run melos exec --scope=caliber_speech_stack -- "dart analyze ."
+      description: Analyze Dart and Flutter workspace packages.
+    test:
+      run: dart run melos exec --scope=caliber_storage_sync -- "flutter test --coverage" && dart run melos exec --scope=caliber_design_system -- "flutter test --coverage" && dart run melos exec --scope=caliber_app_shell -- "flutter test --coverage" && dart run melos exec --scope=caliber_app_runner -- "flutter test --coverage" && dart run melos exec --scope=caliber_interview -- "dart test" && dart run melos exec --scope=caliber_prep_brief -- "dart test" && dart run melos exec --scope=caliber_screens -- "flutter test --coverage" && dart run melos exec --scope=caliber_auth -- "flutter test --coverage" && dart run melos exec --scope=caliber_gateway_client -- "dart test" && dart run melos exec --scope=caliber_app_state -- "flutter test --coverage" && dart run melos exec --scope=caliber_eval_frontend -- "dart test" && dart run melos exec --scope=caliber_shared -- "dart test --coverage=coverage" && dart run melos exec --scope=caliber_speech_stack -- "dart test"
+      description: Run workspace package tests.
+    guardrails:
+      run: dart run infra/guardrails/secret_scan.dart
+      description: Run local guardrail checks.
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
