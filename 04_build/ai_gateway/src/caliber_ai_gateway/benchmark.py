@@ -75,6 +75,60 @@ class BenchmarkProvider(Protocol):
         """Return neutral benchmark feedback text plus provider token usage."""
 
 
+def _openrouter_baseline_model(index: str) -> str:
+    candidates = [
+        f"CALIBER_OPENROUTER_BASELINE{index}_MODEL",
+        "CALIBER_OPENROUTER_GPT_MODEL" if index == "1" else "CALIBER_OPENROUTER_ALT_MODEL",
+        "CALIBER_OPENROUTER_NON_OPENAI_MODEL" if index == "2" else "",
+    ]
+    for name in candidates:
+        if not name:
+            continue
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _openrouter_rate(index: str, kind: str) -> float | None:
+    lane_name = f"CALIBER_OPENROUTER_BASELINE{index}_{kind}_USD_PER_MILLION"
+    shared_name = f"CALIBER_OPENROUTER_{kind}_USD_PER_MILLION"
+    for name in (lane_name, shared_name):
+        value = os.environ.get(name, "").strip()
+        if value:
+            return float(value)
+    return None
+
+
+def _openrouter_fallback_provider(provider: str) -> Literal["chatgpt", "claude"]:
+    value = _openrouter_lane_env(provider, "FALLBACK_PROVIDER") or os.environ.get(
+        "CALIBER_OPENROUTER_FALLBACK_PROVIDER",
+        "chatgpt",
+    )
+    normalized = value.strip().lower()
+    if normalized in {"chatgpt", "openai"}:
+        return "chatgpt"
+    if normalized in {"claude", "anthropic"}:
+        return "claude"
+    raise ProviderTransportError(
+        f"benchmark_provider_fallback_unsupported:{provider}:{normalized}"
+    )
+
+
+def _openrouter_lane_env(provider: str, suffix: str) -> str:
+    provider_upper = provider.upper()
+    names = [f"CALIBER_{provider_upper}_{suffix}"]
+    if provider_upper == "OPENROUTER_BASELINE1":
+        names.append(f"CALIBER_OPENROUTER_BASELINE1_{suffix}")
+    if provider_upper == "OPENROUTER_BASELINE2":
+        names.append(f"CALIBER_OPENROUTER_BASELINE2_{suffix}")
+    for name in names:
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _float_env(name: str, default: float) -> float:
     raw = os.environ.get(name)
     if raw is None or not raw.strip():
@@ -84,6 +138,43 @@ def _float_env(name: str, default: float) -> float:
     except ValueError:
         return default
     return value if value > 0 else default
+
+
+def _openrouter_hard_timeout_seconds(provider: str) -> float:
+    provider_suffix = provider.upper()
+    lane_specific = f"CALIBER_{provider_suffix}_HARD_TIMEOUT_SECONDS"
+    return _float_env(
+        lane_specific,
+        _float_env("CALIBER_OPENROUTER_HARD_TIMEOUT_SECONDS", OPENROUTER_TIMEOUT_SECONDS),
+    )
+
+
+def _read_json_response(request: urllib.request.Request, *, timeout: float) -> dict[str, Any]:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        decoded = json.loads(response.read().decode("utf-8"))
+    if not isinstance(decoded, dict):
+        raise json.JSONDecodeError("OpenRouter response must be an object", "", 0)
+    return decoded
+
+
+def _run_with_timeout(func: Callable[[], T], *, timeout_seconds: float) -> T:
+    results: queue.Queue[tuple[bool, T | BaseException]] = queue.Queue(maxsize=1)
+
+    def target() -> None:
+        try:
+            results.put((True, func()))
+        except BaseException as exc:  # noqa: BLE001
+            results.put((False, exc))
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    thread.join(timeout_seconds)
+    if thread.is_alive():
+        raise TimeoutError("openrouter hard timeout")
+    ok, value = results.get_nowait()
+    if ok:
+        return value  # type: ignore[return-value]
+    raise value
 
 
 def _openai_usage(completion: Any) -> TokenUsage | None:
@@ -108,6 +199,20 @@ def _anthropic_text(payload: dict[str, Any]) -> str:
             if isinstance(text, str):
                 parts.append(text)
     return "\n".join(parts)
+
+
+def _openrouter_text(payload: dict[str, Any]) -> str:
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return ""
+    first = choices[0]
+    if not isinstance(first, dict):
+        return ""
+    message = first.get("message")
+    if not isinstance(message, dict):
+        return ""
+    content = message.get("content")
+    return content if isinstance(content, str) else ""
 
 
 def _dict_usage(usage: Any) -> TokenUsage | None:
