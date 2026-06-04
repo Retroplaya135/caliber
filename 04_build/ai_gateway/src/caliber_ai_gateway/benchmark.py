@@ -130,6 +130,47 @@ class BenchmarkFeedbackService:
         )
 
 
+class OpenAIBenchmarkProvider:
+    provider: Literal["chatgpt"] = "chatgpt"
+
+    def __init__(
+        self,
+        *,
+        model_id: str,
+        input_usd_per_million_tokens: float = INPUT_USD_PER_MILLION_TOKENS,
+        output_usd_per_million_tokens: float = OUTPUT_USD_PER_MILLION_TOKENS,
+    ) -> None:
+        self.model_id = model_id
+        self.input_usd_per_million_tokens = input_usd_per_million_tokens
+        self.output_usd_per_million_tokens = output_usd_per_million_tokens
+
+    def complete(self, request: BenchmarkFeedbackRequest) -> tuple[str, TokenUsage | None]:
+        from openai import OpenAI
+
+        system_prompt, user_prompt = neutral_feedback_prompts(request)
+        client = OpenAI()
+        try:
+            completion = client.chat.completions.create(
+                model=self.model_id,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                max_completion_tokens=request.max_completion_tokens,
+                temperature=0,
+                timeout=20,
+            )
+        except Exception as exc:
+            raise ProviderTransportError("benchmark_provider_error:chatgpt") from exc
+        try:
+            verdict = completion.choices[0].message.content or ""
+        except (AttributeError, IndexError, TypeError) as exc:
+            raise ProviderTransportError("benchmark_provider_malformed:chatgpt") from exc
+        if not verdict.strip():
+            raise ProviderTransportError("benchmark_provider_empty:chatgpt")
+        return verdict.strip(), _openai_usage(completion)
+
+
 class AnthropicBenchmarkProvider:
     provider: Literal["claude"] = "claude"
 
@@ -198,6 +239,132 @@ class AnthropicBenchmarkProvider:
         )
 
 
+class OpenRouterBenchmarkProvider:
+    def __init__(
+        self,
+        *,
+        provider: BenchmarkProviderName = "openrouter",
+        model_id: str = "",
+        input_usd_per_million_tokens: float | None = None,
+        output_usd_per_million_tokens: float | None = None,
+        fallback_provider: Literal["chatgpt", "claude"] | None = None,
+        fallback_model_id: str | None = None,
+    ) -> None:
+        self.provider = provider
+        self.model_id = model_id
+        self.input_usd_per_million_tokens = (
+            input_usd_per_million_tokens
+            if input_usd_per_million_tokens is not None
+            else float(os.environ.get("CALIBER_OPENROUTER_INPUT_USD_PER_MILLION", "0"))
+        )
+        self.output_usd_per_million_tokens = (
+            output_usd_per_million_tokens
+            if output_usd_per_million_tokens is not None
+            else float(os.environ.get("CALIBER_OPENROUTER_OUTPUT_USD_PER_MILLION", "0"))
+        )
+        fallback_kind = fallback_provider or _openrouter_fallback_provider(provider)
+        self.fallback = _openrouter_fallback(
+            provider=provider,
+            fallback_provider=fallback_kind,
+            fallback_model_id=fallback_model_id,
+        )
+        self.fallback_provider = fallback_kind
+        self.last_model_id = model_id
+        self.last_input_usd_per_million_tokens = self.input_usd_per_million_tokens
+        self.last_output_usd_per_million_tokens = self.output_usd_per_million_tokens
+        self.hard_timeout_seconds = _openrouter_hard_timeout_seconds(provider)
+
+    def complete(self, request: BenchmarkFeedbackRequest) -> tuple[str, TokenUsage | None]:
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ProviderTransportError(f"benchmark_provider_key_missing:{self.provider}")
+        if not self.model_id.strip():
+            raise ProviderTransportError(f"benchmark_provider_model_missing:{self.provider}")
+        system_prompt, user_prompt = neutral_feedback_prompts(request)
+        payload = {
+            "model": self.model_id,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "max_tokens": request.max_completion_tokens,
+            "temperature": 0,
+            "seed": _stable_seed(request.answer_id),
+        }
+        headers = {
+            "content-type": "application/json",
+            "authorization": f"Bearer {api_key}",
+        }
+        referer = os.environ.get("OPENROUTER_HTTP_REFERER")
+        title = os.environ.get("OPENROUTER_X_TITLE", "Caliber")
+        if referer:
+            headers["http-referer"] = referer
+        if title:
+            headers["x-title"] = title
+        http_request = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        self._mark_openrouter()
+        try:
+            decoded = _run_with_timeout(
+                lambda: _read_json_response(
+                    http_request,
+                    timeout=OPENROUTER_TIMEOUT_SECONDS,
+                ),
+                timeout_seconds=self.hard_timeout_seconds,
+            )
+        except urllib.error.HTTPError:
+            return self._fallback_to_openai(request)
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+            return self._fallback_to_openai(request)
+        verdict = _openrouter_text(decoded)
+        if not verdict.strip():
+            raise ProviderTransportError("benchmark_provider_empty:openrouter")
+        return verdict.strip(), _dict_usage(decoded.get("usage") if isinstance(decoded, dict) else None)
+
+    def _fallback_to_openai(self, request: BenchmarkFeedbackRequest) -> tuple[str, TokenUsage | None]:
+        verdict, usage = self.fallback.complete(request)
+        self.last_model_id = f"openrouter-fallback:{self.fallback.model_id}"
+        self.last_input_usd_per_million_tokens = self.fallback.input_usd_per_million_tokens
+        self.last_output_usd_per_million_tokens = self.fallback.output_usd_per_million_tokens
+        return verdict, usage
+
+    def _mark_openrouter(self) -> None:
+        self.last_model_id = self.model_id
+        self.last_input_usd_per_million_tokens = self.input_usd_per_million_tokens
+        self.last_output_usd_per_million_tokens = self.output_usd_per_million_tokens
+
+
+def build_default_benchmark_service(model_id: str) -> BenchmarkFeedbackService:
+    return BenchmarkFeedbackService(
+        providers={
+            "chatgpt": OpenAIBenchmarkProvider(model_id=model_id),
+            "claude": AnthropicBenchmarkProvider(
+                model_id=os.environ.get("CALIBER_CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL)
+            ),
+            "openrouter": OpenRouterBenchmarkProvider(
+                provider="openrouter",
+                model_id=os.environ.get("CALIBER_OPENROUTER_MODEL", "").strip(),
+            ),
+            "openrouter_baseline1": OpenRouterBenchmarkProvider(
+                provider="openrouter_baseline1",
+                model_id=_openrouter_baseline_model("1"),
+                input_usd_per_million_tokens=_openrouter_rate("1", "INPUT"),
+                output_usd_per_million_tokens=_openrouter_rate("1", "OUTPUT"),
+            ),
+            "openrouter_baseline2": OpenRouterBenchmarkProvider(
+                provider="openrouter_baseline2",
+                model_id=_openrouter_baseline_model("2"),
+                input_usd_per_million_tokens=_openrouter_rate("2", "INPUT"),
+                output_usd_per_million_tokens=_openrouter_rate("2", "OUTPUT"),
+            ),
+        }
+    )
+
+
 def _openrouter_baseline_model(index: str) -> str:
     candidates = [
         f"CALIBER_OPENROUTER_BASELINE{index}_MODEL",
@@ -236,6 +403,25 @@ def _openrouter_fallback_provider(provider: str) -> Literal["chatgpt", "claude"]
     raise ProviderTransportError(
         f"benchmark_provider_fallback_unsupported:{provider}:{normalized}"
     )
+
+
+def _openrouter_fallback(
+    *,
+    provider: str,
+    fallback_provider: Literal["chatgpt", "claude"],
+    fallback_model_id: str | None,
+) -> BenchmarkProvider:
+    configured_model = (
+        fallback_model_id
+        or _openrouter_lane_env(provider, "FALLBACK_MODEL")
+        or os.environ.get("CALIBER_OPENROUTER_FALLBACK_MODEL", "").strip()
+    )
+    if fallback_provider == "claude":
+        return AnthropicBenchmarkProvider(
+            model_id=configured_model
+            or os.environ.get("CALIBER_CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL)
+        )
+    return OpenAIBenchmarkProvider(model_id=configured_model or "gpt-5.4-mini")
 
 
 def _openrouter_lane_env(provider: str, suffix: str) -> str:
