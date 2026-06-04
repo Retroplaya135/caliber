@@ -75,6 +75,129 @@ class BenchmarkProvider(Protocol):
         """Return neutral benchmark feedback text plus provider token usage."""
 
 
+class BenchmarkFeedbackService:
+    def __init__(self, providers: dict[str, BenchmarkProvider]) -> None:
+        self.providers = providers
+
+    def complete(self, request: BenchmarkFeedbackRequest | dict[str, Any]) -> BenchmarkFeedbackResponse:
+        parsed = (
+            request
+            if isinstance(request, BenchmarkFeedbackRequest)
+            else BenchmarkFeedbackRequest.model_validate(request)
+        )
+        provider = self.providers[parsed.provider]
+        system_prompt, user_prompt = neutral_feedback_prompts(parsed)
+        verdict, usage = provider.complete(parsed)
+        model_id = getattr(provider, "last_model_id", provider.model_id)
+        input_rate = getattr(
+            provider,
+            "last_input_usd_per_million_tokens",
+            provider.input_usd_per_million_tokens,
+        )
+        output_rate = getattr(
+            provider,
+            "last_output_usd_per_million_tokens",
+            provider.output_usd_per_million_tokens,
+        )
+        estimated_prompt_tokens = estimate_text_tokens(system_prompt) + estimate_text_tokens(user_prompt)
+        estimated_completion_tokens = estimate_text_tokens(verdict)
+        prompt_tokens = usage.prompt_tokens if usage is not None else None
+        completion_tokens = usage.completion_tokens if usage is not None else None
+        billable_prompt_tokens = prompt_tokens if prompt_tokens is not None else estimated_prompt_tokens
+        billable_completion_tokens = (
+            completion_tokens if completion_tokens is not None else estimated_completion_tokens
+        )
+        estimated_cost_usd = (
+            billable_prompt_tokens * input_rate
+            + billable_completion_tokens * output_rate
+        ) / 1_000_000
+        return BenchmarkFeedbackResponse(
+            provider=provider.provider,
+            model_id=model_id,
+            prompt_version=parsed.prompt_version,
+            verdict=verdict,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=usage.total_tokens if usage is not None else None,
+            estimated_prompt_tokens=estimated_prompt_tokens,
+            estimated_completion_tokens=estimated_completion_tokens,
+            estimated_total_tokens=estimated_prompt_tokens + estimated_completion_tokens,
+            input_usd_per_million_tokens=input_rate,
+            output_usd_per_million_tokens=output_rate,
+            estimated_cost_usd=estimated_cost_usd,
+            attempts=1,
+            created_at=datetime.now(UTC).isoformat(),
+        )
+
+
+class AnthropicBenchmarkProvider:
+    provider: Literal["claude"] = "claude"
+
+    def __init__(
+        self,
+        *,
+        model_id: str = DEFAULT_CLAUDE_MODEL,
+        input_usd_per_million_tokens: float | None = None,
+        output_usd_per_million_tokens: float | None = None,
+    ) -> None:
+        self.model_id = model_id
+        self.input_usd_per_million_tokens = input_usd_per_million_tokens or float(
+            os.environ.get("CALIBER_CLAUDE_INPUT_USD_PER_MILLION", "1.0")
+        )
+        self.output_usd_per_million_tokens = output_usd_per_million_tokens or float(
+            os.environ.get("CALIBER_CLAUDE_OUTPUT_USD_PER_MILLION", "5.0")
+        )
+
+    def complete(self, request: BenchmarkFeedbackRequest) -> tuple[str, TokenUsage | None]:
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ProviderTransportError("benchmark_provider_key_missing:claude")
+        system_prompt, user_prompt = neutral_feedback_prompts(request)
+        payload = {
+            "model": self.model_id,
+            "max_tokens": request.max_completion_tokens,
+            "temperature": 0,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": user_prompt}],
+        }
+        http_request = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages",
+            data=json.dumps(payload, separators=(",", ":")).encode("utf-8"),
+            headers={
+                "content-type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": ANTHROPIC_API_VERSION,
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(http_request, timeout=20) as response:
+                decoded = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise ProviderTransportError(
+                f"benchmark_provider_error:claude:status_code={exc.code}"
+            ) from exc
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            raise ProviderTransportError("benchmark_provider_error:claude") from exc
+        verdict = _anthropic_text(decoded)
+        if not verdict.strip():
+            raise ProviderTransportError("benchmark_provider_empty:claude")
+        usage = decoded.get("usage") if isinstance(decoded, dict) else None
+        return verdict.strip(), TokenUsage(
+            prompt_tokens=_int_or_none(usage.get("input_tokens") if isinstance(usage, dict) else None),
+            completion_tokens=_int_or_none(
+                usage.get("output_tokens") if isinstance(usage, dict) else None
+            ),
+            total_tokens=(
+                _int_or_none(usage.get("input_tokens")) + _int_or_none(usage.get("output_tokens"))
+                if isinstance(usage, dict)
+                and usage.get("input_tokens") is not None
+                and usage.get("output_tokens") is not None
+                else None
+            ),
+        )
+
+
 def _openrouter_baseline_model(index: str) -> str:
     candidates = [
         f"CALIBER_OPENROUTER_BASELINE{index}_MODEL",
@@ -177,6 +300,22 @@ def _run_with_timeout(func: Callable[[], T], *, timeout_seconds: float) -> T:
     raise value
 
 
+def neutral_feedback_prompts(request: BenchmarkFeedbackRequest) -> tuple[str, str]:
+    system_prompt = (
+        "You are giving ordinary interview feedback to a software engineer. "
+        "Be specific and actionable, but do not use Caliber rubrics, hidden scoring, or numeric scores."
+    )
+    user_prompt = (
+        f"Role: {request.role}\n"
+        f"Question ID: {request.question_id}\n"
+        f"Question:\n{request.question}\n\n"
+        f"Candidate answer:\n{request.answer}\n\n"
+        "Evaluate whether this answer sounds senior-level yet. Explain the strongest signals, "
+        "the main gaps, and what the candidate should change next."
+    )
+    return system_prompt, user_prompt
+
+
 def _openai_usage(completion: Any) -> TokenUsage | None:
     usage = getattr(completion, "usage", None)
     if usage is None:
@@ -223,6 +362,13 @@ def _dict_usage(usage: Any) -> TokenUsage | None:
         completion_tokens=_int_or_none(usage.get("completion_tokens")),
         total_tokens=_int_or_none(usage.get("total_tokens")),
     )
+
+
+def _stable_seed(value: str) -> int:
+    seed = 17
+    for codepoint in value.encode("utf-8"):
+        seed = (seed * 31 + codepoint) & 0x7FFFFFFF
+    return seed
 
 
 def _int_or_none(value: Any) -> int | None:
