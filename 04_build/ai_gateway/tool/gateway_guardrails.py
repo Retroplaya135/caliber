@@ -64,6 +64,10 @@ ALLOWED_SCOPE_PREFIX = "04_build/ai_gateway/"
 FORK_BRANCH = "fork/03-ai-gateway"
 
 
+def run(command: list[str], env: dict[str, str] | None = None) -> None:
+    subprocess.run(command, cwd=ROOT, env=env, check=True)
+
+
 def iter_text_files() -> list[Path]:
     suffixes = {".py", ".md", ".toml", ".yaml", ".yml", ".json", ".txt"}
     ignored = {".pytest_cache", "__pycache__"}
@@ -79,6 +83,17 @@ def iter_text_files() -> list[Path]:
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def check_secrets() -> None:
+    findings: list[str] = []
+    for path in iter_text_files():
+        text = read(path)
+        if any(pattern.search(text) for pattern in SECRET_PATTERNS):
+            findings.append(f"CALIBER-SECRET-001 | {path.relative_to(ROOT)}: secret-like value detected")
+    if findings:
+        raise SystemExit("\n".join(findings))
+    print("CALIBER-SECRET-CLEAN: gateway contains no secret-like values")
 
 
 def check_complexity() -> None:
@@ -101,6 +116,41 @@ def check_complexity() -> None:
     if findings:
         raise SystemExit("\n".join(findings))
     print("CALIBER-COMPLEXITY-CLEAN: gateway package is within local complexity budget")
+
+
+def check_pipeline_log() -> None:
+    checkpoint = ROOT / "docs/checkpoint_log.md"
+    text = read(checkpoint)
+    missing = [term for term in REQUIRED_PIPELINE_TERMS if term not in text]
+    if missing:
+        raise SystemExit(f"CALIBER-CHECKPOINT-001: checkpoint log missing {', '.join(missing)}")
+    print("CALIBER-CHECKPOINT-CLEAN: checkpoint log covers every gateway pipeline stage")
+
+
+def check_profile_artifact() -> None:
+    profile = ROOT / "docs/profiling_artifact.md"
+    text = read(profile)
+    missing = [term for term in REQUIRED_PROFILE_TERMS if term not in text]
+    if missing:
+        raise SystemExit(f"CALIBER-PROFILE-001: profiling artifact missing {', '.join(missing)}")
+    print("CALIBER-PROFILE-CLEAN: profiling artifact records gateway cache-hit proof")
+
+
+def check_handoff_artifact() -> None:
+    handoff = ROOT / "docs/handoff_status.md"
+    text = read(handoff)
+    missing = [term for term in REQUIRED_HANDOFF_TERMS if term not in text]
+    if missing:
+        raise SystemExit(f"CALIBER-HANDOFF-001: handoff artifact missing {', '.join(missing)}")
+    print("CALIBER-HANDOFF-CLEAN: handoff artifact follows canonical Part B shape")
+
+
+def check_product_model_pin() -> None:
+    provider = ROOT.parents[1] / "config/ai/provider_adapter.yaml"
+    text = read(provider)
+    if 'default_model: "gpt-5.4-mini"' not in text:
+        raise SystemExit("CALIBER-PROVIDER-001: product ProviderAdapter model must stay gpt-5.4-mini")
+    print("CALIBER-PROVIDER-CLEAN: product model pin remains gpt-5.4-mini")
 
 
 def git_changed_paths(args: list[str]) -> set[str]:
@@ -146,7 +196,81 @@ def check_scope() -> None:
     print("CALIBER-SCOPE-CLEAN: branch changes stay inside 04_build/ai_gateway")
 
 
+def check_golden() -> None:
+    golden_files = [
+        ROOT / "tests/golden/interview_content_judgment.json",
+        ROOT / "tests/golden/resume_bullet.json",
+        ROOT / "tests/golden/ats_report.json",
+    ]
+    required = {
+        "schema_version",
+    }
+    forbidden = {
+        "corpus_bundle_version",
+        "routing_policy_version",
+        "route_hash",
+        "request_hash",
+        "audit_ref",
+    }
+    for golden in golden_files:
+        payload = json.loads(read(golden))
+        missing = sorted(required.difference(payload))
+        if missing:
+            raise SystemExit(f"CALIBER-GOLDEN-001: {golden.name} missing {', '.join(missing)}")
+        leaked = sorted(forbidden.intersection(payload))
+        if leaked:
+            raise SystemExit(f"CALIBER-GOLDEN-002: {golden.name} leaks gateway envelope fields: {', '.join(leaked)}")
+        if payload.get("model_id", "gpt-5.4-mini") != "gpt-5.4-mini":
+            raise SystemExit(f"CALIBER-GOLDEN-002: {golden.name} must use product model gpt-5.4-mini")
+    print("CALIBER-GOLDEN-CLEAN: gateway golden outputs match strict Schema Core surfaces")
+
+
 def check_codegen() -> None:
     print("CALIBER-CODEGEN-CLEAN: gateway Python package has no generated code requirement")
 
 
+def check_analyze() -> None:
+    check_secrets()
+    check_complexity()
+    check_scope()
+    check_pipeline_log()
+    check_profile_artifact()
+    check_handoff_artifact()
+    check_product_model_pin()
+    check_golden()
+    check_codegen()
+    print("CALIBER-ANALYZE-CLEAN: gateway static guardrails passed")
+
+
+def check_tests() -> None:
+    with tempfile.TemporaryDirectory(prefix="caliber-gateway-coverage-") as tmp_dir:
+        env = os.environ.copy()
+        env["COVERAGE_FILE"] = str(Path(tmp_dir) / ".coverage")
+        run([sys.executable, "-m", "coverage", "erase"], env=env)
+        run([sys.executable, "-m", "coverage", "run", "-m", "pytest"], env=env)
+        run([sys.executable, "-m", "coverage", "report"], env=env)
+    print("CALIBER-TEST-CLEAN: gateway tests and coverage passed")
+
+
+def check_all() -> None:
+    check_analyze()
+    check_tests()
+    print("CALIBER-GATEWAY-GUARDRAILS-CLEAN: every Gateway Core guardrail passed")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["all", "analyze", "test", "golden", "codegen"])
+    args = parser.parse_args(argv)
+    {
+        "all": check_all,
+        "analyze": check_analyze,
+        "test": check_tests,
+        "golden": check_golden,
+        "codegen": check_codegen,
+    }[args.command]()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
