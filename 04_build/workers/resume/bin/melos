@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Worker-local Melos shim for Resume Evidence validation.
+
+This keeps `melos run ...` reproducible even when global Melos is not on PATH.
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PYTHON = sys.executable
+
+SCRIPTS = {
+    "analyze": [PYTHON, "-m", "resume_worker.tools.analyze"],
+    "test": [PYTHON, "-m", "resume_worker.tools.test", "--coverage"],
+    "profile": [PYTHON, "-m", "resume_worker.tools.profile"],
+    "guardrails": [PYTHON, "-m", "resume_worker.tools.guardrails"],
+    "upstream-contracts": [PYTHON, "-m", "resume_worker.tools.upstream_contracts"],
+    "upstream-contracts-strict": [
+        PYTHON,
+        "-m",
+        "resume_worker.tools.upstream_contracts",
+        "--fail-on-blocker",
+    ],
+}
+
+
+def main(argv: list[str]) -> int:
+    if argv in (["--version"], ["version"]):
+        print("melos-shim 0.1.0 (caliber resume worker)")
+        return 0
+
+    if len(argv) < 2 or argv[0] != "run":
+        print("CALIBER-MELOS-001: expected `melos run <script>`", file=sys.stderr)
+        return 2
+
+    script = argv[1]
+    if script not in SCRIPTS:
+        print(f"CALIBER-MELOS-002: unknown script `{script}`", file=sys.stderr)
+        return 2
+
+    return subprocess.call(SCRIPTS[script] + argv[2:], cwd=ROOT)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))
