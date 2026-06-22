@@ -1,0 +1,802 @@
+[
+  {
+    "answer_id": "b10_rate_limiter_mid_001",
+    "question_id": "backend_depth_distributed_rate_limiter_l5_l6_v0_2",
+    "archetype_id": "distributed_rate_limiter",
+    "scenario_kind": "system_design",
+    "prompt": "Design a distributed rate limiter for a multi-tenant API.",
+    "candidate_answer": "I would put NGINX in front because it already has rate limiting. If we need more, I would add Redis counters per user and block requests when the counter gets high. We can add more servers so it does not crash. I would keep the limits configurable and maybe log blocked requests.",
+    "answer": "I would put NGINX in front because it already has rate limiting. If we need more, I would add Redis counters per user and block requests when the counter gets high. We can add more servers so it does not crash. I would keep the limits configurable and maybe log blocked requests.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "tradeoffs": "missing",
+      "failure_modes": "missing",
+      "operations": "partial",
+      "communication": "partial"
+    },
+    "rationale_for_seed_band": "Names a plausible component but skips quota semantics, fairness, consistency, failure behavior, and rollout ownership.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; inspired by common Backend Senior rate-limiter interview themes."
+  },
+  {
+    "answer_id": "b10_rate_limiter_borderline_002",
+    "question_id": "backend_depth_distributed_rate_limiter_l5_l6_v0_2",
+    "archetype_id": "distributed_rate_limiter",
+    "scenario_kind": "system_design",
+    "prompt": "Design a distributed rate limiter for a multi-tenant API.",
+    "candidate_answer": "I would clarify whether limits are per user, per tenant, and per endpoint, then use token buckets backed by Redis atomic scripts. I would separate global and route-specific limits and expose headers for remaining quota. The tradeoff is Redis becomes a dependency, so I would add timeouts and safe defaults, but I have not fully specified regional consistency or abuse cases.",
+    "answer": "I would clarify whether limits are per user, per tenant, and per endpoint, then use token buckets backed by Redis atomic scripts. I would separate global and route-specific limits and expose headers for remaining quota. The tradeoff is Redis becomes a dependency, so I would add timeouts and safe defaults, but I have not fully specified regional consistency or abuse cases.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "tradeoffs": "partial",
+      "failure_modes": "partial",
+      "operations": "partial",
+      "communication": "met"
+    },
+    "rationale_for_seed_band": "Strong structure and some tradeoff handling, but regional correctness and adversarial failure modes remain shallow.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_rate_limiter_senior_003",
+    "question_id": "backend_depth_distributed_rate_limiter_l5_l6_v0_2",
+    "archetype_id": "distributed_rate_limiter",
+    "scenario_kind": "system_design",
+    "prompt": "Design a distributed rate limiter for a multi-tenant API.",
+    "candidate_answer": "I would start by separating product semantics from mechanism: tenant limits, user limits, endpoint cost, burst allowance, and what must fail closed. For the mechanism I would use local token buckets for hot-path latency with a Redis or sharded counter authority for reconciliation, and I would be explicit that sliding windows improve fairness but cost more memory and coordination. Failure mode policy matters: auth write paths fail closed, low-risk read paths degrade with a conservative local cap, and config rollout uses shadow evaluation before enforcement. I would instrument allowed, rejected, timeout, and override counts by tenant so we can catch noisy neighbors and bad config before it becomes an incident.",
+    "answer": "I would start by separating product semantics from mechanism: tenant limits, user limits, endpoint cost, burst allowance, and what must fail closed. For the mechanism I would use local token buckets for hot-path latency with a Redis or sharded counter authority for reconciliation, and I would be explicit that sliding windows improve fairness but cost more memory and coordination. Failure mode policy matters: auth write paths fail closed, low-risk read paths degrade with a conservative local cap, and config rollout uses shadow evaluation before enforcement. I would instrument allowed, rejected, timeout, and override counts by tenant so we can catch noisy neighbors and bad config before it becomes an incident.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "tradeoffs": "met",
+      "failure_modes": "met",
+      "operations": "met",
+      "communication": "met"
+    },
+    "rationale_for_seed_band": "Anchors requirements, tradeoffs, failure policy, rollout, and observable ownership at a Senior bar.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_rate_limiter_borderline_004",
+    "question_id": "backend_depth_distributed_rate_limiter_l5_l6_v0_2",
+    "archetype_id": "distributed_rate_limiter",
+    "scenario_kind": "system_design",
+    "prompt": "Design a distributed rate limiter for a multi-tenant API.",
+    "candidate_answer": "I would use a token bucket because it supports bursts and is easy for clients to understand. Each API server checks a shared Redis key and returns 429 with retry headers when the token count is empty. I would add dashboards for rejection rate and latency. I am less sure how I would handle cross-region accuracy; I would probably accept eventual consistency unless product says quota abuse is expensive.",
+    "answer": "I would use a token bucket because it supports bursts and is easy for clients to understand. Each API server checks a shared Redis key and returns 429 with retry headers when the token count is empty. I would add dashboards for rejection rate and latency. I am less sure how I would handle cross-region accuracy; I would probably accept eventual consistency unless product says quota abuse is expensive.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "tradeoffs": "partial",
+      "failure_modes": "partial",
+      "operations": "met",
+      "communication": "met"
+    },
+    "rationale_for_seed_band": "Shows Senior-shaped thinking but leaves requirements and cross-region failure policy underdeveloped.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ticket_mid_005",
+    "question_id": "backend_depth_ticket_booking_concurrency_l5_l6_v0_2",
+    "archetype_id": "ticket_booking_concurrency",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design a ticket reservation flow that prevents overselling.",
+    "candidate_answer": "I would store tickets in a database and mark a row sold when someone checks out. If two people try the same seat, the database will handle it. We can lock the table during checkout and show an error if it is already sold. I would add retries because users do not like failures.",
+    "answer": "I would store tickets in a database and mark a row sold when someone checks out. If two people try the same seat, the database will handle it. We can lock the table during checkout and show an error if it is already sold. I would add retries because users do not like failures.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "concurrency_control": "partial",
+      "idempotency": "missing",
+      "failure_modes": "missing",
+      "operations": "missing"
+    },
+    "rationale_for_seed_band": "Relies on vague database locking and does not distinguish holds, payment, idempotency, expiration, or failure recovery.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ticket_borderline_006",
+    "question_id": "backend_depth_ticket_booking_concurrency_l5_l6_v0_2",
+    "archetype_id": "ticket_booking_concurrency",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design a ticket reservation flow that prevents overselling.",
+    "candidate_answer": "I would use a reservation table with seat id, user id, status, and expiration. Checkout first creates a short hold with a unique constraint on active seat holds, then payment converts the hold to sold. A background job releases expired holds. I would use idempotency keys for payment callbacks, but I have not fully covered partial payment failure or reconciling provider webhooks after a timeout.",
+    "answer": "I would use a reservation table with seat id, user id, status, and expiration. Checkout first creates a short hold with a unique constraint on active seat holds, then payment converts the hold to sold. A background job releases expired holds. I would use idempotency keys for payment callbacks, but I have not fully covered partial payment failure or reconciling provider webhooks after a timeout.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "concurrency_control": "met",
+      "idempotency": "partial",
+      "failure_modes": "partial",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Good data model and concurrency path but incomplete payment/webhook failure handling.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ticket_senior_007",
+    "question_id": "backend_depth_ticket_booking_concurrency_l5_l6_v0_2",
+    "archetype_id": "ticket_booking_concurrency",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design a ticket reservation flow that prevents overselling.",
+    "candidate_answer": "I would model inventory as explicit state transitions: available, held with expires_at, sold, and released. The write path uses a compare-and-set or unique active-hold constraint so only one user can hold a seat, and every checkout and payment callback carries an idempotency key. Payment is asynchronous: a hold is not sold until the provider result is reconciled, and timeout paths move to a pending review state rather than double-selling. I would monitor hold expiration lag, payment callback lag, duplicate idempotency hits, and oversell invariant violations, with a runbook to freeze sales for an event if the invariant monitor fires.",
+    "answer": "I would model inventory as explicit state transitions: available, held with expires_at, sold, and released. The write path uses a compare-and-set or unique active-hold constraint so only one user can hold a seat, and every checkout and payment callback carries an idempotency key. Payment is asynchronous: a hold is not sold until the provider result is reconciled, and timeout paths move to a pending review state rather than double-selling. I would monitor hold expiration lag, payment callback lag, duplicate idempotency hits, and oversell invariant violations, with a runbook to freeze sales for an event if the invariant monitor fires.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "concurrency_control": "met",
+      "idempotency": "met",
+      "failure_modes": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Owns state transitions, concurrency invariant, payment idempotency, reconciliation, monitoring, and operational response.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ticket_mid_008",
+    "question_id": "backend_depth_ticket_booking_concurrency_l5_l6_v0_2",
+    "archetype_id": "ticket_booking_concurrency",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design a ticket reservation flow that prevents overselling.",
+    "candidate_answer": "I would put all purchases into a queue so only one worker updates the ticket at a time. That avoids race conditions. If the worker fails, another worker can retry the job. The front end can show loading while the job runs. I would rely on logs to find problems.",
+    "answer": "I would put all purchases into a queue so only one worker updates the ticket at a time. That avoids race conditions. If the worker fails, another worker can retry the job. The front end can show loading while the job runs. I would rely on logs to find problems.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "concurrency_control": "partial",
+      "idempotency": "missing",
+      "failure_modes": "partial",
+      "operations": "missing"
+    },
+    "rationale_for_seed_band": "Queue serialization is plausible but it hides latency, payment, expiration, retry idempotency, and invariant monitoring details.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_code_review_mid_009",
+    "question_id": "backend_depth_code_review_debugging_l5_l6_v0_2",
+    "archetype_id": "code_review_debugging",
+    "scenario_kind": "debugging_code_review",
+    "prompt": "Review a backend change that adds retries around payment writes.",
+    "candidate_answer": "I would ask the developer to add more tests and make sure the retry count is not too high. Retries are usually good for flaky services. I would also add logging so we can see failures. If the code passes CI, I would approve after the tests are added.",
+    "answer": "I would ask the developer to add more tests and make sure the retry count is not too high. Retries are usually good for flaky services. I would also add logging so we can see failures. If the code passes CI, I would approve after the tests are added.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "risk_identification": "partial",
+      "idempotency": "missing",
+      "test_strategy": "partial",
+      "production_safety": "missing",
+      "communication": "partial"
+    },
+    "rationale_for_seed_band": "Misses the core payment retry/idempotency hazard and treats CI as sufficient production safety.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_code_review_borderline_010",
+    "question_id": "backend_depth_code_review_debugging_l5_l6_v0_2",
+    "archetype_id": "code_review_debugging",
+    "scenario_kind": "debugging_code_review",
+    "prompt": "Review a backend change that adds retries around payment writes.",
+    "candidate_answer": "I would first check whether the retried operation is idempotent. If it can charge twice, the retry should move behind an idempotency key or outbox pattern. I would ask for tests covering provider timeout, duplicate callback, and retry exhaustion. I would also ask for metrics on retry attempts, but I am not yet proposing a rollout plan.",
+    "answer": "I would first check whether the retried operation is idempotent. If it can charge twice, the retry should move behind an idempotency key or outbox pattern. I would ask for tests covering provider timeout, duplicate callback, and retry exhaustion. I would also ask for metrics on retry attempts, but I am not yet proposing a rollout plan.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "risk_identification": "met",
+      "idempotency": "met",
+      "test_strategy": "met",
+      "production_safety": "partial",
+      "communication": "met"
+    },
+    "rationale_for_seed_band": "Identifies the right failure class and tests, but rollout and operational guardrails are incomplete.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_code_review_senior_011",
+    "question_id": "backend_depth_code_review_debugging_l5_l6_v0_2",
+    "archetype_id": "code_review_debugging",
+    "scenario_kind": "debugging_code_review",
+    "prompt": "Review a backend change that adds retries around payment writes.",
+    "candidate_answer": "I would block the change until we prove the retried write is idempotent, because a timeout can mean the provider accepted the charge while our service did not receive the response. I would ask for an idempotency key persisted before the provider call, an outbox or reconciliation job for uncertain states, and tests for timeout-after-success, duplicate webhook, retry exhaustion, and process crash after local commit. For rollout I would ship behind a flag, alert on duplicate idempotency keys and pending reconciliation age, and document when support should refund versus wait for reconciliation.",
+    "answer": "I would block the change until we prove the retried write is idempotent, because a timeout can mean the provider accepted the charge while our service did not receive the response. I would ask for an idempotency key persisted before the provider call, an outbox or reconciliation job for uncertain states, and tests for timeout-after-success, duplicate webhook, retry exhaustion, and process crash after local commit. For rollout I would ship behind a flag, alert on duplicate idempotency keys and pending reconciliation age, and document when support should refund versus wait for reconciliation.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "risk_identification": "met",
+      "idempotency": "met",
+      "test_strategy": "met",
+      "production_safety": "met",
+      "communication": "met"
+    },
+    "rationale_for_seed_band": "Names the precise hazard, required design fix, test matrix, rollout guardrails, and support-facing operational policy.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_code_review_mid_012",
+    "question_id": "backend_depth_code_review_debugging_l5_l6_v0_2",
+    "archetype_id": "code_review_debugging",
+    "scenario_kind": "debugging_code_review",
+    "prompt": "Review a backend change that adds retries around payment writes.",
+    "candidate_answer": "I would suggest exponential backoff and a circuit breaker. We should not retry forever because it could slow the app. I would ask for a unit test and a dashboard. The change sounds reasonable because payment providers can be flaky.",
+    "answer": "I would suggest exponential backoff and a circuit breaker. We should not retry forever because it could slow the app. I would ask for a unit test and a dashboard. The change sounds reasonable because payment providers can be flaky.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "risk_identification": "partial",
+      "idempotency": "missing",
+      "test_strategy": "partial",
+      "production_safety": "partial",
+      "communication": "partial"
+    },
+    "rationale_for_seed_band": "Mentions reliability patterns but misses payment correctness and duplicate side effects.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_concurrency_mid_013",
+    "question_id": "backend_depth_concurrency_productionization_l5_l6_v0_1",
+    "archetype_id": "concurrency_productionization",
+    "scenario_kind": "concurrency_productionization",
+    "prompt": "Productionize a concurrent worker pool that processes customer jobs.",
+    "candidate_answer": "I would increase the worker count and use threads so jobs finish faster. If there are race conditions, I would add locks around shared data. I would put failed jobs back into the queue and log errors. We can tune the number of threads after launch.",
+    "answer": "I would increase the worker count and use threads so jobs finish faster. If there are race conditions, I would add locks around shared data. I would put failed jobs back into the queue and log errors. We can tune the number of threads after launch.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "concurrency_control": "partial",
+      "backpressure": "missing",
+      "failure_modes": "partial",
+      "operations": "missing"
+    },
+    "rationale_for_seed_band": "Focuses on throughput knobs without owning backpressure, idempotency, fairness, observability, or rollout.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_concurrency_borderline_014",
+    "question_id": "backend_depth_concurrency_productionization_l5_l6_v0_1",
+    "archetype_id": "concurrency_productionization",
+    "scenario_kind": "concurrency_productionization",
+    "prompt": "Productionize a concurrent worker pool that processes customer jobs.",
+    "candidate_answer": "I would define job idempotency first, then use a bounded queue and a worker pool with per-tenant concurrency limits. Failed jobs get retried with exponential backoff and then sent to a dead-letter queue. I would track queue depth, age, success rate, and retry count. I still need to be more explicit about load shedding and safe rollout.",
+    "answer": "I would define job idempotency first, then use a bounded queue and a worker pool with per-tenant concurrency limits. Failed jobs get retried with exponential backoff and then sent to a dead-letter queue. I would track queue depth, age, success rate, and retry count. I still need to be more explicit about load shedding and safe rollout.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "concurrency_control": "met",
+      "backpressure": "partial",
+      "failure_modes": "met",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Good concurrent design but incomplete load shedding and rollout plan.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_concurrency_senior_015",
+    "question_id": "backend_depth_concurrency_productionization_l5_l6_v0_1",
+    "archetype_id": "concurrency_productionization",
+    "scenario_kind": "concurrency_productionization",
+    "prompt": "Productionize a concurrent worker pool that processes customer jobs.",
+    "candidate_answer": "I would start with the job contract: idempotency key, maximum processing time, tenant fairness, and which failures are retryable. The worker pool should use bounded queues, per-tenant concurrency caps, leases with heartbeat extension, and backpressure before the queue age violates SLO. Retry policy should distinguish transient provider errors from permanent validation failures, and the dead-letter queue needs owner paging plus replay tooling. I would roll out by shadowing job classification, then enabling one tenant cohort, while alerting on queue age, lease loss, duplicate execution, and tenant starvation.",
+    "answer": "I would start with the job contract: idempotency key, maximum processing time, tenant fairness, and which failures are retryable. The worker pool should use bounded queues, per-tenant concurrency caps, leases with heartbeat extension, and backpressure before the queue age violates SLO. Retry policy should distinguish transient provider errors from permanent validation failures, and the dead-letter queue needs owner paging plus replay tooling. I would roll out by shadowing job classification, then enabling one tenant cohort, while alerting on queue age, lease loss, duplicate execution, and tenant starvation.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "concurrency_control": "met",
+      "backpressure": "met",
+      "failure_modes": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Covers contract, fairness, leases, backpressure, retry taxonomy, tooling, rollout, and operational signals.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_concurrency_mid_016",
+    "question_id": "backend_depth_concurrency_productionization_l5_l6_v0_1",
+    "archetype_id": "concurrency_productionization",
+    "scenario_kind": "concurrency_productionization",
+    "prompt": "Productionize a concurrent worker pool that processes customer jobs.",
+    "candidate_answer": "I would use a message queue because queues are reliable. Workers can pull jobs and update the database when done. If the database is slow, we can add more workers. I would use logs for debugging and restart workers if they get stuck.",
+    "answer": "I would use a message queue because queues are reliable. Workers can pull jobs and update the database when done. If the database is slow, we can add more workers. I would use logs for debugging and restart workers if they get stuck.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "missing",
+      "concurrency_control": "partial",
+      "backpressure": "missing",
+      "failure_modes": "partial",
+      "operations": "missing"
+    },
+    "rationale_for_seed_band": "Generic queue answer with no ownership of duplicate execution, stuck leases, tenant fairness, or capacity limits.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_incident_mid_017",
+    "question_id": "backend_depth_incident_response_l5_l6_v0_2",
+    "archetype_id": "incident_response",
+    "scenario_kind": "incident_reasoning",
+    "prompt": "A checkout latency incident starts after a deploy. Walk through your response.",
+    "candidate_answer": "I would check logs and roll back the deploy if it looks suspicious. Then I would ask the team what changed. After the rollback I would write a postmortem and maybe add more dashboards so we can catch it next time.",
+    "answer": "I would check logs and roll back the deploy if it looks suspicious. Then I would ask the team what changed. After the rollback I would write a postmortem and maybe add more dashboards so we can catch it next time.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "triage": "partial",
+      "hypothesis": "missing",
+      "mitigation": "partial",
+      "communication": "partial",
+      "learning": "partial"
+    },
+    "rationale_for_seed_band": "Has rollback instinct but lacks impact framing, hypothesis isolation, customer comms, and verification.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_incident_borderline_018",
+    "question_id": "backend_depth_incident_response_l5_l6_v0_2",
+    "archetype_id": "incident_response",
+    "scenario_kind": "incident_reasoning",
+    "prompt": "A checkout latency incident starts after a deploy. Walk through your response.",
+    "candidate_answer": "I would first identify customer impact, error rate, and whether payments are failing or only slow. I would compare deploy timing, database metrics, and dependency latency, then roll back if the deploy is the leading hypothesis. I would keep stakeholders updated every fifteen minutes. I should be more explicit about validating the rollback and preserving evidence for the postmortem.",
+    "answer": "I would first identify customer impact, error rate, and whether payments are failing or only slow. I would compare deploy timing, database metrics, and dependency latency, then roll back if the deploy is the leading hypothesis. I would keep stakeholders updated every fifteen minutes. I should be more explicit about validating the rollback and preserving evidence for the postmortem.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "triage": "met",
+      "hypothesis": "met",
+      "mitigation": "partial",
+      "communication": "met",
+      "learning": "partial"
+    },
+    "rationale_for_seed_band": "Solid incident framing but incomplete verification and evidence-preserving recovery loop.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_incident_senior_019",
+    "question_id": "backend_depth_incident_response_l5_l6_v0_2",
+    "archetype_id": "incident_response",
+    "scenario_kind": "incident_reasoning",
+    "prompt": "A checkout latency incident starts after a deploy. Walk through your response.",
+    "candidate_answer": "I would appoint roles immediately: incident commander, comms, and investigator, then state the customer impact in terms of checkout p95, error rate, and payment uncertainty. I would test the deploy hypothesis against traces, dependency latency, database waits, and feature-flag exposure before choosing rollback, flag disable, or traffic shaping. Mitigation is not done until the user-facing SLO recovers and the payment uncertainty queue is reconciled. Afterward I would write the timeline, contributing factors, failed detection, and one or two owners for prevention rather than a broad wishlist.",
+    "answer": "I would appoint roles immediately: incident commander, comms, and investigator, then state the customer impact in terms of checkout p95, error rate, and payment uncertainty. I would test the deploy hypothesis against traces, dependency latency, database waits, and feature-flag exposure before choosing rollback, flag disable, or traffic shaping. Mitigation is not done until the user-facing SLO recovers and the payment uncertainty queue is reconciled. Afterward I would write the timeline, contributing factors, failed detection, and one or two owners for prevention rather than a broad wishlist.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "triage": "met",
+      "hypothesis": "met",
+      "mitigation": "met",
+      "communication": "met",
+      "learning": "met"
+    },
+    "rationale_for_seed_band": "Owns roles, impact, hypothesis testing, mitigation verification, reconciliation, and postmortem quality.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_incident_mid_020",
+    "question_id": "backend_depth_incident_response_l5_l6_v0_2",
+    "archetype_id": "incident_response",
+    "scenario_kind": "incident_reasoning",
+    "prompt": "A checkout latency incident starts after a deploy. Walk through your response.",
+    "candidate_answer": "I would open the dashboard and look for the slow endpoint. If it is checkout, I would scale the service up and restart bad pods. I would tell the manager we are investigating. Once metrics look better, I would close the incident.",
+    "answer": "I would open the dashboard and look for the slow endpoint. If it is checkout, I would scale the service up and restart bad pods. I would tell the manager we are investigating. Once metrics look better, I would close the incident.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "triage": "partial",
+      "hypothesis": "missing",
+      "mitigation": "partial",
+      "communication": "partial",
+      "learning": "missing"
+    },
+    "rationale_for_seed_band": "Treats incident response as dashboard-and-scale without hypothesis, customer impact, rollback criteria, or learning loop.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_project_mid_021",
+    "question_id": "backend_depth_project_retro_l5_l6_v0_1",
+    "archetype_id": "project_retro",
+    "scenario_kind": "project_deep_dive",
+    "prompt": "Tell me about a backend project you led and defend the technical decisions.",
+    "candidate_answer": "I led a project to move reports to a new service. I picked Node because the team knew it and we finished on time. The main challenge was coordinating with frontend. It was successful because users got the feature and there were not many bugs. Next time I would write more tests.",
+    "answer": "I led a project to move reports to a new service. I picked Node because the team knew it and we finished on time. The main challenge was coordinating with frontend. It was successful because users got the feature and there were not many bugs. Next time I would write more tests.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "scope": "partial",
+      "tradeoffs": "missing",
+      "ownership": "partial",
+      "impact": "partial",
+      "learning": "partial"
+    },
+    "rationale_for_seed_band": "Gives project narration without technical depth, constraints, alternatives, measurable impact, or hard tradeoffs.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_project_borderline_022",
+    "question_id": "backend_depth_project_retro_l5_l6_v0_1",
+    "archetype_id": "project_retro",
+    "scenario_kind": "project_deep_dive",
+    "prompt": "Tell me about a backend project you led and defend the technical decisions.",
+    "candidate_answer": "I led a migration from synchronous report generation to queued jobs. The key tradeoff was accepting eventual completion in exchange for protecting API latency. We defined a contract for idempotent job creation and gave users status updates. The project reduced p95 request latency, but I could do a better job explaining the failure modes we missed during rollout.",
+    "answer": "I led a migration from synchronous report generation to queued jobs. The key tradeoff was accepting eventual completion in exchange for protecting API latency. We defined a contract for idempotent job creation and gave users status updates. The project reduced p95 request latency, but I could do a better job explaining the failure modes we missed during rollout.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "scope": "met",
+      "tradeoffs": "met",
+      "ownership": "partial",
+      "impact": "met",
+      "learning": "partial"
+    },
+    "rationale_for_seed_band": "Strong technical frame and impact, but failure analysis and ownership of misses are not fully defended.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_project_senior_023",
+    "question_id": "backend_depth_project_retro_l5_l6_v0_1",
+    "archetype_id": "project_retro",
+    "scenario_kind": "project_deep_dive",
+    "prompt": "Tell me about a backend project you led and defend the technical decisions.",
+    "candidate_answer": "I led the migration of synchronous report generation to an asynchronous job platform because the old path tied API latency to customer-specific data scans. I rejected a bigger streaming rewrite because the immediate customer pain was queue isolation and progress visibility, not real-time delivery. The architecture used idempotent job creation, per-tenant concurrency caps, status transitions, and replayable completion events. We cut p95 API latency from seconds to under two hundred milliseconds, but we initially missed a stuck-job alert; I owned the incident review and added lease-age paging, replay tooling, and a migration checklist for the next service.",
+    "answer": "I led the migration of synchronous report generation to an asynchronous job platform because the old path tied API latency to customer-specific data scans. I rejected a bigger streaming rewrite because the immediate customer pain was queue isolation and progress visibility, not real-time delivery. The architecture used idempotent job creation, per-tenant concurrency caps, status transitions, and replayable completion events. We cut p95 API latency from seconds to under two hundred milliseconds, but we initially missed a stuck-job alert; I owned the incident review and added lease-age paging, replay tooling, and a migration checklist for the next service.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "scope": "met",
+      "tradeoffs": "met",
+      "ownership": "met",
+      "impact": "met",
+      "learning": "met"
+    },
+    "rationale_for_seed_band": "Defends constraints, rejected alternative, architecture, measurable impact, failure learning, and ownership.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_project_borderline_024",
+    "question_id": "backend_depth_project_retro_l5_l6_v0_1",
+    "archetype_id": "project_retro",
+    "scenario_kind": "project_deep_dive",
+    "prompt": "Tell me about a backend project you led and defend the technical decisions.",
+    "candidate_answer": "I owned the backend side of a billing refactor. We moved invoice calculation into a separate service so deploys were safer and teams could work independently. I chose a service boundary because the domain rules were changing fast. The answer is light on exact numbers, but I can explain the migration plan, feature flags, and rollback path.",
+    "answer": "I owned the backend side of a billing refactor. We moved invoice calculation into a separate service so deploys were safer and teams could work independently. I chose a service boundary because the domain rules were changing fast. The answer is light on exact numbers, but I can explain the migration plan, feature flags, and rollback path.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "scope": "met",
+      "tradeoffs": "partial",
+      "ownership": "met",
+      "impact": "partial",
+      "learning": "partial"
+    },
+    "rationale_for_seed_band": "Shows ownership and migration thinking but under-specifies measurable outcomes and alternatives.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_people_mid_025",
+    "question_id": "backend_depth_people_leadership_l5_l6_v0_2",
+    "archetype_id": "people_leadership",
+    "scenario_kind": "behavioral_leadership",
+    "prompt": "Describe a time you raised the bar for a backend team.",
+    "candidate_answer": "I helped the team by reviewing more PRs and reminding people to write tests. I also answered questions in Slack when people were blocked. The team shipped the project, so I think it went well. I would like to mentor more people next time.",
+    "answer": "I helped the team by reviewing more PRs and reminding people to write tests. I also answered questions in Slack when people were blocked. The team shipped the project, so I think it went well. I would like to mentor more people next time.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "ownership": "partial",
+      "leverage": "missing",
+      "conflict": "missing",
+      "outcome": "partial",
+      "reflection": "partial"
+    },
+    "rationale_for_seed_band": "Describes helpful execution but not leveraged leadership, standards, conflict, or measurable team outcome.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_people_borderline_026",
+    "question_id": "backend_depth_people_leadership_l5_l6_v0_2",
+    "archetype_id": "people_leadership",
+    "scenario_kind": "behavioral_leadership",
+    "prompt": "Describe a time you raised the bar for a backend team.",
+    "candidate_answer": "I noticed our backend reviews focused on style and missed production failure modes. I introduced a review checklist for idempotency, observability, rollback, and tenant impact, then paired with two engineers on the first few reviews. The team found issues earlier, but I should have measured review quality more explicitly instead of relying on anecdotes.",
+    "answer": "I noticed our backend reviews focused on style and missed production failure modes. I introduced a review checklist for idempotency, observability, rollback, and tenant impact, then paired with two engineers on the first few reviews. The team found issues earlier, but I should have measured review quality more explicitly instead of relying on anecdotes.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "ownership": "met",
+      "leverage": "met",
+      "conflict": "partial",
+      "outcome": "partial",
+      "reflection": "met"
+    },
+    "rationale_for_seed_band": "Clear leverage and reflection, but impact measurement and conflict/navigation are underdeveloped.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_people_senior_027",
+    "question_id": "backend_depth_people_leadership_l5_l6_v0_2",
+    "archetype_id": "people_leadership",
+    "scenario_kind": "behavioral_leadership",
+    "prompt": "Describe a time you raised the bar for a backend team.",
+    "candidate_answer": "Our team repeatedly shipped backend changes with weak rollback and alerting plans, so I proposed a release-readiness rubric and made it lightweight enough to adopt. I handled pushback by showing two recent incidents where missing ownership cost us hours, then paired with skeptics on their own services instead of mandating a process from above. Within a quarter, design reviews consistently included rollback owners and alert thresholds, and two mid-level engineers began leading those reviews without me. The main thing I would improve is moving the rubric into templates earlier so the habit survived team churn.",
+    "answer": "Our team repeatedly shipped backend changes with weak rollback and alerting plans, so I proposed a release-readiness rubric and made it lightweight enough to adopt. I handled pushback by showing two recent incidents where missing ownership cost us hours, then paired with skeptics on their own services instead of mandating a process from above. Within a quarter, design reviews consistently included rollback owners and alert thresholds, and two mid-level engineers began leading those reviews without me. The main thing I would improve is moving the rubric into templates earlier so the habit survived team churn.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "ownership": "met",
+      "leverage": "met",
+      "conflict": "met",
+      "outcome": "met",
+      "reflection": "met"
+    },
+    "rationale_for_seed_band": "Shows standards, influence, pushback handling, repeatable team leverage, outcome, and self-correction.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ai_mid_028",
+    "question_id": "backend_depth_ai_in_the_loop_l5_l6_v0_1",
+    "archetype_id": "ai_in_the_loop",
+    "scenario_kind": "ai_in_the_loop_verification",
+    "prompt": "Design how you would safely use an AI assistant in a backend verification workflow.",
+    "candidate_answer": "I would ask the AI to review code and generate tests. It can find bugs faster than people. If the AI says the code is good, I would still run CI. We can save time by letting it write most of the test cases.",
+    "answer": "I would ask the AI to review code and generate tests. It can find bugs faster than people. If the AI says the code is good, I would still run CI. We can save time by letting it write most of the test cases.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "verification": "partial",
+      "trust_boundary": "missing",
+      "failure_modes": "missing",
+      "workflow": "partial",
+      "operations": "missing"
+    },
+    "rationale_for_seed_band": "Treats AI as a generic reviewer and lacks trust boundaries, reproducibility, prompt/version control, and human accountability.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ai_borderline_029",
+    "question_id": "backend_depth_ai_in_the_loop_l5_l6_v0_1",
+    "archetype_id": "ai_in_the_loop",
+    "scenario_kind": "ai_in_the_loop_verification",
+    "prompt": "Design how you would safely use an AI assistant in a backend verification workflow.",
+    "candidate_answer": "I would use the AI to propose test cases and highlight risky diffs, but it would not approve changes. The workflow would pin prompts and models, store the generated findings, and require a human owner to accept or reject each item. I would add a small eval set for known bugs. I need to go deeper on privacy and how to prevent prompt drift over time.",
+    "answer": "I would use the AI to propose test cases and highlight risky diffs, but it would not approve changes. The workflow would pin prompts and models, store the generated findings, and require a human owner to accept or reject each item. I would add a small eval set for known bugs. I need to go deeper on privacy and how to prevent prompt drift over time.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "verification": "met",
+      "trust_boundary": "met",
+      "failure_modes": "partial",
+      "workflow": "met",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Good human-in-loop and determinism posture, but privacy and drift monitoring are not complete.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_ai_senior_030",
+    "question_id": "backend_depth_ai_in_the_loop_l5_l6_v0_1",
+    "archetype_id": "ai_in_the_loop",
+    "scenario_kind": "ai_in_the_loop_verification",
+    "prompt": "Design how you would safely use an AI assistant in a backend verification workflow.",
+    "candidate_answer": "I would define the AI as a suggestion engine, never an approval authority. The pipeline would feed it bounded diffs, service contracts, and a pinned rubric, then require structured findings with file references, confidence-free rationale, and a human disposition. We would cache by content hash, pin prompt and model versions, redact secrets before the gateway, and track false positive and missed-bug rates on a seeded eval set. If the model output is malformed or cites a nonexistent line, the check fails closed to manual review rather than blocking deploys on an opaque claim.",
+    "answer": "I would define the AI as a suggestion engine, never an approval authority. The pipeline would feed it bounded diffs, service contracts, and a pinned rubric, then require structured findings with file references, confidence-free rationale, and a human disposition. We would cache by content hash, pin prompt and model versions, redact secrets before the gateway, and track false positive and missed-bug rates on a seeded eval set. If the model output is malformed or cites a nonexistent line, the check fails closed to manual review rather than blocking deploys on an opaque claim.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "verification": "met",
+      "trust_boundary": "met",
+      "failure_modes": "met",
+      "workflow": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Defines trust boundaries, structured evidence, versioning, cache, secret redaction, evals, and safe fallback.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_pubsub_mid_031",
+    "question_id": "backend_depth_pub_sub_event_system_l5_l6_v0_2",
+    "archetype_id": "pub_sub_event_system",
+    "scenario_kind": "system_design",
+    "prompt": "Design a publish-subscribe event system for internal backend services.",
+    "candidate_answer": "I would use Kafka or SNS and let services publish messages. Consumers subscribe to topics they need. We should make messages JSON because it is easy. If consumers fail, the queue will retry. I would add monitoring for failures.",
+    "answer": "I would use Kafka or SNS and let services publish messages. Consumers subscribe to topics they need. We should make messages JSON because it is easy. If consumers fail, the queue will retry. I would add monitoring for failures.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "requirements": "partial",
+      "schema_evolution": "missing",
+      "delivery_semantics": "partial",
+      "failure_modes": "partial",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Tool-first answer with little schema evolution, ordering, replay, poison message, or ownership detail.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_pubsub_borderline_032",
+    "question_id": "backend_depth_pub_sub_event_system_l5_l6_v0_2",
+    "archetype_id": "pub_sub_event_system",
+    "scenario_kind": "system_design",
+    "prompt": "Design a publish-subscribe event system for internal backend services.",
+    "candidate_answer": "I would define topics around business events and require versioned schemas. Producers publish to Kafka, consumers process with idempotency keys, and poison messages go to a dead-letter topic. I would support replay by retaining events for a period. I have not fully described ownership of schema changes or exactly-once expectations.",
+    "answer": "I would define topics around business events and require versioned schemas. Producers publish to Kafka, consumers process with idempotency keys, and poison messages go to a dead-letter topic. I would support replay by retaining events for a period. I have not fully described ownership of schema changes or exactly-once expectations.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "schema_evolution": "partial",
+      "delivery_semantics": "met",
+      "failure_modes": "met",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Strong event mechanics but incomplete governance and semantic contract ownership.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_pubsub_senior_033",
+    "question_id": "backend_depth_pub_sub_event_system_l5_l6_v0_2",
+    "archetype_id": "pub_sub_event_system",
+    "scenario_kind": "system_design",
+    "prompt": "Design a publish-subscribe event system for internal backend services.",
+    "candidate_answer": "I would start by separating event facts from commands, because subscribers need stable business facts rather than internal write requests. The system needs schema registry checks, compatibility rules, owner metadata, idempotent consumer contracts, partitioning guidance, and replay procedures. I would be explicit that most services get at-least-once delivery with idempotent processing rather than promising exactly-once. Operationally I would track consumer lag, dead-letter volume, schema rejection rate, and replay jobs, and require a rollout plan for every breaking schema migration.",
+    "answer": "I would start by separating event facts from commands, because subscribers need stable business facts rather than internal write requests. The system needs schema registry checks, compatibility rules, owner metadata, idempotent consumer contracts, partitioning guidance, and replay procedures. I would be explicit that most services get at-least-once delivery with idempotent processing rather than promising exactly-once. Operationally I would track consumer lag, dead-letter volume, schema rejection rate, and replay jobs, and require a rollout plan for every breaking schema migration.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "requirements": "met",
+      "schema_evolution": "met",
+      "delivery_semantics": "met",
+      "failure_modes": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Owns event semantics, schema governance, delivery contracts, replay, and operational signals.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_migration_mid_034",
+    "question_id": "backend_depth_database_migration_l5_l6_v0_2",
+    "archetype_id": "database_migration",
+    "scenario_kind": "system_design",
+    "prompt": "Plan a zero-downtime database migration for a large table.",
+    "candidate_answer": "I would make the schema change in a migration and run it during a low traffic window. If it is slow, I would increase database capacity. The app can be deployed after the migration finishes. We should back up the database first.",
+    "answer": "I would make the schema change in a migration and run it during a low traffic window. If it is slow, I would increase database capacity. The app can be deployed after the migration finishes. We should back up the database first.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "compatibility": "missing",
+      "backfill": "missing",
+      "rollback": "partial",
+      "verification": "missing",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Batch migration answer ignores expand-contract, dual writes/reads, backfill safety, and rollback verification.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_migration_borderline_035",
+    "question_id": "backend_depth_database_migration_l5_l6_v0_2",
+    "archetype_id": "database_migration",
+    "scenario_kind": "system_design",
+    "prompt": "Plan a zero-downtime database migration for a large table.",
+    "candidate_answer": "I would use an expand-and-contract migration: add the new nullable column, deploy code that writes both old and new fields, backfill in batches, switch reads, then remove the old field later. I would monitor replication lag and error rate. I should be clearer about how I would verify data equivalence and stop a bad backfill safely.",
+    "answer": "I would use an expand-and-contract migration: add the new nullable column, deploy code that writes both old and new fields, backfill in batches, switch reads, then remove the old field later. I would monitor replication lag and error rate. I should be clearer about how I would verify data equivalence and stop a bad backfill safely.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "compatibility": "met",
+      "backfill": "met",
+      "rollback": "partial",
+      "verification": "partial",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Correct migration pattern but verification and abort semantics remain shallow.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_migration_senior_036",
+    "question_id": "backend_depth_database_migration_l5_l6_v0_2",
+    "archetype_id": "database_migration",
+    "scenario_kind": "system_design",
+    "prompt": "Plan a zero-downtime database migration for a large table.",
+    "candidate_answer": "I would use expand, migrate, verify, contract. First add backward-compatible schema, then deploy dual-write or derived-write code with a feature flag, then backfill in small idempotent batches that track high-water marks and pause on replication lag. Reads shift only after sampled and aggregate reconciliation prove old and new fields match for the critical queries. Rollback is to disable reads from the new path and stop the backfill; contract cleanup happens in a later release after stale writers are gone. I would publish owner, abort thresholds, and customer-impact checks before starting.",
+    "answer": "I would use expand, migrate, verify, contract. First add backward-compatible schema, then deploy dual-write or derived-write code with a feature flag, then backfill in small idempotent batches that track high-water marks and pause on replication lag. Reads shift only after sampled and aggregate reconciliation prove old and new fields match for the critical queries. Rollback is to disable reads from the new path and stop the backfill; contract cleanup happens in a later release after stale writers are gone. I would publish owner, abort thresholds, and customer-impact checks before starting.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "compatibility": "met",
+      "backfill": "met",
+      "rollback": "met",
+      "verification": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Defines safe migration phases, idempotent backfill, verification gates, rollback path, ownership, and abort thresholds.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_observability_mid_037",
+    "question_id": "backend_depth_observability_system_l5_l6_v0_2",
+    "archetype_id": "observability_system",
+    "scenario_kind": "system_design",
+    "prompt": "Design observability for a latency-sensitive backend service.",
+    "candidate_answer": "I would add logs, metrics, and traces. Logs should include request id so we can debug issues. Metrics should include latency and errors. We can use a dashboard in Datadog and set alerts if latency is high.",
+    "answer": "I would add logs, metrics, and traces. Logs should include request id so we can debug issues. Metrics should include latency and errors. We can use a dashboard in Datadog and set alerts if latency is high.",
+    "seed_band": "clearly_mid",
+    "quality_band": "clearly_mid",
+    "expected_rubric_marks": {
+      "signals": "partial",
+      "slo": "missing",
+      "cardinality": "missing",
+      "incident_use": "partial",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Lists observability tools without SLOs, cardinality control, sampling, incident workflow, or ownership.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_observability_senior_038",
+    "question_id": "backend_depth_observability_system_l5_l6_v0_2",
+    "archetype_id": "observability_system",
+    "scenario_kind": "system_design",
+    "prompt": "Design observability for a latency-sensitive backend service.",
+    "candidate_answer": "I would start from the user-facing SLO and map it to RED metrics for the API, dependency latency, queue age if async work is involved, and saturation signals for CPU, connection pools, and database waits. Logs need stable request and tenant identifiers but not raw PII, and traces should sample intelligently while preserving slow and error paths. I would define cardinality budgets before adding labels, then build dashboards around incident questions: is it everyone, one tenant, one dependency, or one deploy cohort. Alerts should page on burn rate and customer impact, not every noisy metric threshold.",
+    "answer": "I would start from the user-facing SLO and map it to RED metrics for the API, dependency latency, queue age if async work is involved, and saturation signals for CPU, connection pools, and database waits. Logs need stable request and tenant identifiers but not raw PII, and traces should sample intelligently while preserving slow and error paths. I would define cardinality budgets before adding labels, then build dashboards around incident questions: is it everyone, one tenant, one dependency, or one deploy cohort. Alerts should page on burn rate and customer impact, not every noisy metric threshold.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "signals": "met",
+      "slo": "met",
+      "cardinality": "met",
+      "incident_use": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Ties telemetry to SLO, incident questions, cardinality, privacy, sampling, saturation, and alert quality.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_api_borderline_039",
+    "question_id": "backend_depth_api_design_tradeoffs_l5_l6_v0_2",
+    "archetype_id": "api_design_tradeoffs",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design an API for bulk updating user notification preferences.",
+    "candidate_answer": "I would create a bulk update endpoint that accepts a list of user ids and preferences. It should validate the payload and return which updates succeeded or failed. I would use pagination or batching so the request is not too large. I would like to add idempotency, but I have not worked through partial failures completely.",
+    "answer": "I would create a bulk update endpoint that accepts a list of user ids and preferences. It should validate the payload and return which updates succeeded or failed. I would use pagination or batching so the request is not too large. I would like to add idempotency, but I have not worked through partial failures completely.",
+    "seed_band": "borderline_senior",
+    "quality_band": "borderline_senior",
+    "expected_rubric_marks": {
+      "contract": "met",
+      "idempotency": "partial",
+      "partial_failure": "partial",
+      "versioning": "missing",
+      "operations": "partial"
+    },
+    "rationale_for_seed_band": "Reasonable API shape but underdeveloped idempotency, partial failure semantics, versioning, and auditability.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  },
+  {
+    "answer_id": "b10_api_senior_040",
+    "question_id": "backend_depth_api_design_tradeoffs_l5_l6_v0_2",
+    "archetype_id": "api_design_tradeoffs",
+    "scenario_kind": "low_level_design",
+    "prompt": "Design an API for bulk updating user notification preferences.",
+    "candidate_answer": "I would avoid a giant ambiguous update endpoint and define a bulk operation resource with an idempotency key, request validation, maximum batch size, and per-item result records. The API should return an operation id immediately if processing can exceed the request budget, then expose status with succeeded, failed, retried, and skipped counts plus stable error codes. Partial failure is part of the contract: clients can retry the same idempotency key without duplicating writes. I would version the schema, audit who changed preferences, and alert on failure-rate spikes or long-running operations.",
+    "answer": "I would avoid a giant ambiguous update endpoint and define a bulk operation resource with an idempotency key, request validation, maximum batch size, and per-item result records. The API should return an operation id immediately if processing can exceed the request budget, then expose status with succeeded, failed, retried, and skipped counts plus stable error codes. Partial failure is part of the contract: clients can retry the same idempotency key without duplicating writes. I would version the schema, audit who changed preferences, and alert on failure-rate spikes or long-running operations.",
+    "seed_band": "clearly_senior",
+    "quality_band": "clearly_senior",
+    "expected_rubric_marks": {
+      "contract": "met",
+      "idempotency": "met",
+      "partial_failure": "met",
+      "versioning": "met",
+      "operations": "met"
+    },
+    "rationale_for_seed_band": "Defines operation contract, idempotency, partial failure, status, versioning, auditability, and operational visibility.",
+    "provenance_note": "Original synthetic fixture authored for Block 10; no public candidate answer text used."
+  }
+]
