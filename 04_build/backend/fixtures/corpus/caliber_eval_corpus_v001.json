@@ -1,0 +1,22 @@
+{
+  "bundle_version": "corpus_bundle_v001",
+  "signature": "caliber-fnv1a64:a4f800296472a2a3",
+  "replace_never_mutate": true,
+  "records": [
+    {
+      "record_id": "rubric_hash_map_tradeoffs",
+      "kind": "rubric_slice",
+      "title": "Hash map tradeoff rubric",
+      "body": "Strong answers compare hash maps with ordered indexes, describe collision handling, and quantify memory overhead before choosing the data structure.",
+      "role_id": "backend_engineer",
+      "domain": "software",
+      "level_band": "senior",
+      "company_archetype": "product_saas",
+      "tags": ["interview", "data_structures"],
+      "metadata": {
+        "owner": "fork/04-06-eval-cluster",
+        "source": "caliber technical plan module 04"
+      }
+    }
+  ]
+}
