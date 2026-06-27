@@ -1,0 +1,711 @@
+{
+  "evidence_span": {
+    "schema_version": "evidence_span.v1",
+    "source_id": "transcript-1",
+    "source_type": "transcript",
+    "start_offset": 0,
+    "end_offset": 12,
+    "quote": "Built APIs",
+    "metadata": {
+      "line": 1
+    }
+  },
+  "target_role_company": {
+    "schema_version": "target_role_company.v1",
+    "role_id": "backend-platform-engineer",
+    "domain": "backend",
+    "level_band": "senior",
+    "company_archetype": "growth-stage-b2b-saas",
+    "title": "Senior Backend Engineer",
+    "market": "us",
+    "seniority_order": 4,
+    "metadata": {
+      "taxonomy": "caliber-targets.v1"
+    }
+  },
+  "profile_identity": {
+    "schema_version": "profile_identity.v1",
+    "profile_id": "profile-1",
+    "owner_user_id": "user-1",
+    "display_name": "Avery Candidate",
+    "primary_domain": "backend",
+    "target_level_band": "senior",
+    "locale": "en-US",
+    "created_at": "2026-05-31T20:00:00.000Z",
+    "updated_at": "2026-05-31T20:30:00.000Z",
+    "metadata": {
+      "privacy": "local-first"
+    }
+  },
+  "target_matrix_cell": {
+    "schema_version": "target_matrix_cell.v1",
+    "cell_id": "cell-1",
+    "profile_id": "profile-1",
+    "target": {
+      "schema_version": "target_role_company.v1",
+      "role_id": "backend-platform-engineer",
+      "domain": "backend",
+      "level_band": "senior",
+      "company_archetype": "growth-stage-b2b-saas",
+      "title": "Senior Backend Engineer",
+      "market": "us",
+      "seniority_order": 4,
+      "metadata": {
+        "taxonomy": "caliber-targets.v1"
+      }
+    },
+    "skill_axis": "distributed-systems",
+    "evidence_atom_ids": [
+      "atom-1"
+    ],
+    "readiness_score": 0.74,
+    "gap_score": 0.26,
+    "priority": 1,
+    "source_version": "target-matrix-policy.v1",
+    "metadata": {
+      "calculated_by": "rules.v1"
+    }
+  },
+  "transcript_segment": {
+    "schema_version": "transcript_segment.v1",
+    "segment_id": "seg-1",
+    "speaker_label": "candidate",
+    "start_ms": 0,
+    "end_ms": 1800,
+    "text": "Built APIs",
+    "confidence": 0.93,
+    "word_ids": [
+      "word-1",
+      "word-2"
+    ],
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "transcript-1",
+        "source_type": "transcript",
+        "start_offset": 0,
+        "end_offset": 12,
+        "quote": "Built APIs",
+        "metadata": {
+          "line": 1
+        }
+      }
+    ]
+  },
+  "transcript_word": {
+    "schema_version": "transcript_word.v1",
+    "word_id": "word-1",
+    "segment_id": "seg-1",
+    "text": "Built",
+    "start_ms": 0,
+    "end_ms": 500,
+    "confidence": 0.96
+  },
+  "glossary_hit": {
+    "schema_version": "glossary_hit.v1",
+    "term": "API",
+    "normalized_term": "api",
+    "word_ids": [
+      "word-2"
+    ],
+    "confidence": 0.91,
+    "source": "jargon-layer-1"
+  },
+  "transcript": {
+    "schema_version": "transcript.v1",
+    "transcript_id": "transcript-1",
+    "segments": [
+      {
+        "schema_version": "transcript_segment.v1",
+        "segment_id": "seg-1",
+        "speaker_label": "candidate",
+        "start_ms": 0,
+        "end_ms": 1800,
+        "text": "Built APIs",
+        "confidence": 0.93,
+        "word_ids": [
+          "word-1",
+          "word-2"
+        ],
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "transcript-1",
+            "source_type": "transcript",
+            "start_offset": 0,
+            "end_offset": 12,
+            "quote": "Built APIs",
+            "metadata": {
+              "line": 1
+            }
+          }
+        ]
+      }
+    ],
+    "words": [
+      {
+        "schema_version": "transcript_word.v1",
+        "word_id": "word-1",
+        "segment_id": "seg-1",
+        "text": "Built",
+        "start_ms": 0,
+        "end_ms": 500,
+        "confidence": 0.96
+      }
+    ],
+    "engine_id": "whisper-cpp",
+    "engine_version": "1.8.5",
+    "glossary_hits": [
+      {
+        "schema_version": "glossary_hit.v1",
+        "term": "API",
+        "normalized_term": "api",
+        "word_ids": [
+          "word-2"
+        ],
+        "confidence": 0.91,
+        "source": "jargon-layer-1"
+      }
+    ],
+    "transcript_policy_version": "transcript-policy.v1",
+    "locale": "en-US",
+    "recorded_at": "2026-05-31T20:00:00.000Z",
+    "source_uri": "file:///local/interview.wav",
+    "duration_ms": 1800
+  },
+  "interview_content_judgment": {
+    "schema_version": "interview_content_judgment.v2",
+    "judgment_id": "judgment-1",
+    "profile_id": "profile-1",
+    "target": {
+      "schema_version": "target_role_company.v1",
+      "role_id": "backend-platform-engineer",
+      "domain": "backend",
+      "level_band": "senior",
+      "company_archetype": "growth-stage-b2b-saas",
+      "title": "Senior Backend Engineer",
+      "market": "us",
+      "seniority_order": 4,
+      "metadata": {
+        "taxonomy": "caliber-targets.v1"
+      }
+    },
+    "question_id": "q-1",
+    "answer_transcript_id": "transcript-1",
+    "rubric_version": "interview-rubric.v1",
+    "prompt_version": "interview-content-prompt.v1",
+    "model_id": "gpt-5.4-mini",
+    "level_band": "senior",
+    "strengths": [
+      "Names tradeoffs"
+    ],
+    "risks": [
+      "Needs clearer metrics"
+    ],
+    "recommended_actions": [
+      "Add latency and scale evidence"
+    ],
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "transcript-1",
+        "source_type": "transcript",
+        "start_offset": 0,
+        "end_offset": 12,
+        "quote": "Built APIs",
+        "metadata": {
+          "line": 1
+        }
+      }
+    ],
+    "created_at": "2026-05-31T20:10:00.000Z"
+  },
+  "resume_bullet": {
+    "schema_version": "resume_bullet.v1",
+    "bullet_id": "bullet-1",
+    "document_id": "resume-1",
+    "text": "Built resilient APIs for high-volume workflows.",
+    "evidence_atom_ids": [
+      "atom-1"
+    ],
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ],
+    "rewrite_policy_version": "resume-rewrite.v1",
+    "prompt_version": "resume-bullet-prompt.v1",
+    "model_id": "gpt-5.4-mini",
+    "source_bullet_id": "source-bullet-1",
+    "confidence": 0.88
+  },
+  "ats_extractable_field": {
+    "schema_version": "ats_extractable_field.v1",
+    "field_key": "backend_api_evidence",
+    "label": "Backend API evidence",
+    "value": "Built resilient APIs for high-volume workflows.",
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ]
+  },
+  "ats_coverage_gap": {
+    "schema_version": "ats_coverage_gap.v1",
+    "gap_id": "gap-1",
+    "keyword": "observability",
+    "reason": "No explicit observability keyword appears in the source bullet.",
+    "severity": "medium",
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ]
+  },
+  "ats_report": {
+    "schema_version": "ats_report.v2",
+    "report_id": "ats-2",
+    "document_id": "resume-1",
+    "target": {
+      "schema_version": "target_role_company.v1",
+      "role_id": "backend-platform-engineer",
+      "domain": "backend",
+      "level_band": "senior",
+      "company_archetype": "growth-stage-b2b-saas",
+      "title": "Senior Backend Engineer",
+      "market": "us",
+      "seniority_order": 4,
+      "metadata": {
+        "taxonomy": "caliber-targets.v1"
+      }
+    },
+    "ats_test_matrix_version": "ats-matrix.v1",
+    "keyword_match_version": "rapidfuzz-policy.v1",
+    "extractable_fields": [
+      {
+        "schema_version": "ats_extractable_field.v1",
+        "field_key": "backend_api_evidence",
+        "label": "Backend API evidence",
+        "value": "Built resilient APIs for high-volume workflows.",
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "resume-source-1",
+            "source_type": "resume",
+            "start_offset": 4,
+            "end_offset": 24,
+            "quote": "resilient APIs",
+            "metadata": {
+              "section": "experience"
+            }
+          }
+        ]
+      }
+    ],
+    "matched_keywords": [
+      "api",
+      "distributed systems"
+    ],
+    "coverage_gaps": [
+      {
+        "schema_version": "ats_coverage_gap.v1",
+        "gap_id": "gap-1",
+        "keyword": "observability",
+        "reason": "No explicit observability keyword appears in the source bullet.",
+        "severity": "medium",
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "resume-source-1",
+            "source_type": "resume",
+            "start_offset": 4,
+            "end_offset": 24,
+            "quote": "resilient APIs",
+            "metadata": {
+              "section": "experience"
+            }
+          }
+        ]
+      }
+    ],
+    "reasoning": "Resume evidence supports API and backend experience, while observability remains an uncovered explicit keyword.",
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ],
+    "created_at": "2026-06-02T18:00:00.000Z"
+  },
+  "evidence_atom": {
+    "schema_version": "evidence_atom.v1",
+    "atom_id": "atom-1",
+    "profile_id": "profile-1",
+    "source_id": "resume-source-1",
+    "source_type": "resume",
+    "text": "resilient APIs",
+    "tags": [
+      "backend",
+      "api"
+    ],
+    "captured_at": "2026-05-31T20:05:00.000Z",
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ],
+    "confidence": 0.9,
+    "metadata": {
+      "parser": "manual-fixture"
+    }
+  },
+  "render_contract": {
+    "schema_version": "render_contract.v1",
+    "renderer_id": "pdf-renderer",
+    "renderer_version": "renderer.v1",
+    "template_id": "modern",
+    "template_version": "template.v1",
+    "page_size": "letter",
+    "margin_profile": "standard",
+    "allowed_formats": [
+      "pdf",
+      "docx"
+    ],
+    "layout_policy_version": "layout-policy.v1"
+  },
+  "resume_section": {
+    "schema_version": "resume_section.v1",
+    "section_id": "section-1",
+    "section_type": "experience",
+    "heading": "Experience",
+    "order": 1,
+    "bullets": [
+      {
+        "schema_version": "resume_bullet.v1",
+        "bullet_id": "bullet-1",
+        "document_id": "resume-1",
+        "text": "Built resilient APIs for high-volume workflows.",
+        "evidence_atom_ids": [
+          "atom-1"
+        ],
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "resume-source-1",
+            "source_type": "resume",
+            "start_offset": 4,
+            "end_offset": 24,
+            "quote": "resilient APIs",
+            "metadata": {
+              "section": "experience"
+            }
+          }
+        ],
+        "rewrite_policy_version": "resume-rewrite.v1",
+        "prompt_version": "resume-bullet-prompt.v1",
+        "model_id": "gpt-5.4-mini",
+        "source_bullet_id": "source-bullet-1",
+        "confidence": 0.88
+      }
+    ],
+    "evidence_atom_ids": [
+      "atom-1"
+    ]
+  },
+  "resume_document": {
+    "schema_version": "resume_document.v1",
+    "document_id": "resume-1",
+    "profile_id": "profile-1",
+    "title": "Backend Resume",
+    "template_id": "modern",
+    "template_version": "template.v1",
+    "render_contract": {
+      "schema_version": "render_contract.v1",
+      "renderer_id": "pdf-renderer",
+      "renderer_version": "renderer.v1",
+      "template_id": "modern",
+      "template_version": "template.v1",
+      "page_size": "letter",
+      "margin_profile": "standard",
+      "allowed_formats": [
+        "pdf",
+        "docx"
+      ],
+      "layout_policy_version": "layout-policy.v1"
+    },
+    "sections": [
+      {
+        "schema_version": "resume_section.v1",
+        "section_id": "section-1",
+        "section_type": "experience",
+        "heading": "Experience",
+        "order": 1,
+        "bullets": [
+          {
+            "schema_version": "resume_bullet.v1",
+            "bullet_id": "bullet-1",
+            "document_id": "resume-1",
+            "text": "Built resilient APIs for high-volume workflows.",
+            "evidence_atom_ids": [
+              "atom-1"
+            ],
+            "evidence_spans": [
+              {
+                "schema_version": "evidence_span.v1",
+                "source_id": "resume-source-1",
+                "source_type": "resume",
+                "start_offset": 4,
+                "end_offset": 24,
+                "quote": "resilient APIs",
+                "metadata": {
+                  "section": "experience"
+                }
+              }
+            ],
+            "rewrite_policy_version": "resume-rewrite.v1",
+            "prompt_version": "resume-bullet-prompt.v1",
+            "model_id": "gpt-5.4-mini",
+            "source_bullet_id": "source-bullet-1",
+            "confidence": 0.88
+          }
+        ],
+        "evidence_atom_ids": [
+          "atom-1"
+        ]
+      }
+    ],
+    "evidence_atoms": [
+      {
+        "schema_version": "evidence_atom.v1",
+        "atom_id": "atom-1",
+        "profile_id": "profile-1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "text": "resilient APIs",
+        "tags": [
+          "backend",
+          "api"
+        ],
+        "captured_at": "2026-05-31T20:05:00.000Z",
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "resume-source-1",
+            "source_type": "resume",
+            "start_offset": 4,
+            "end_offset": 24,
+            "quote": "resilient APIs",
+            "metadata": {
+              "section": "experience"
+            }
+          }
+        ],
+        "confidence": 0.9,
+        "metadata": {
+          "parser": "manual-fixture"
+        }
+      }
+    ],
+    "created_at": "2026-05-31T20:05:00.000Z",
+    "updated_at": "2026-05-31T20:25:00.000Z"
+  },
+  "corpus_query": {
+    "schema_version": "corpus_query.v1",
+    "query_id": "query-1",
+    "query_text": "distributed systems api",
+    "target": {
+      "schema_version": "target_role_company.v1",
+      "role_id": "backend-platform-engineer",
+      "domain": "backend",
+      "level_band": "senior",
+      "company_archetype": "growth-stage-b2b-saas",
+      "title": "Senior Backend Engineer",
+      "market": "us",
+      "seniority_order": 4,
+      "metadata": {
+        "taxonomy": "caliber-targets.v1"
+      }
+    },
+    "corpus_bundle_version": "corpus-bundle.v1",
+    "filters": {
+      "domain": "backend"
+    },
+    "limit": 5
+  },
+  "corpus_hit": {
+    "schema_version": "corpus_hit.v1",
+    "record_id": "record-1",
+    "bundle_id": "corpus-core",
+    "bundle_version": "corpus-bundle.v1",
+    "score": 1.2,
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "corpus-record-1",
+        "source_type": "corpus",
+        "start_offset": 0,
+        "end_offset": 42,
+        "quote": "distributed systems api",
+        "metadata": {}
+      }
+    ],
+    "metadata": {
+      "terms": [
+        "api",
+        "distributed"
+      ]
+    }
+  },
+  "corpus_retrieval_result": {
+    "schema_version": "corpus_retrieval_result.v1",
+    "query": {
+      "schema_version": "corpus_query.v1",
+      "query_id": "query-1",
+      "query_text": "distributed systems api",
+      "target": {
+        "schema_version": "target_role_company.v1",
+        "role_id": "backend-platform-engineer",
+        "domain": "backend",
+        "level_band": "senior",
+        "company_archetype": "growth-stage-b2b-saas",
+        "title": "Senior Backend Engineer",
+        "market": "us",
+        "seniority_order": 4,
+        "metadata": {
+          "taxonomy": "caliber-targets.v1"
+        }
+      },
+      "corpus_bundle_version": "corpus-bundle.v1",
+      "filters": {
+        "domain": "backend"
+      },
+      "limit": 5
+    },
+    "hits": [
+      {
+        "schema_version": "corpus_hit.v1",
+        "record_id": "record-1",
+        "bundle_id": "corpus-core",
+        "bundle_version": "corpus-bundle.v1",
+        "score": 1.2,
+        "evidence_spans": [
+          {
+            "schema_version": "evidence_span.v1",
+            "source_id": "corpus-record-1",
+            "source_type": "corpus",
+            "start_offset": 0,
+            "end_offset": 42,
+            "quote": "distributed systems api",
+            "metadata": {}
+          }
+        ],
+        "metadata": {
+          "terms": [
+            "api",
+            "distributed"
+          ]
+        }
+      }
+    ],
+    "retrieval_policy_version": "retrieval-policy.v1",
+    "generated_at": "2026-05-31T20:40:00.000Z"
+  },
+  "billing_ledger_entry": {
+    "schema_version": "billing_ledger_entry.v1",
+    "entry_id": "billing-entry-1",
+    "user_id": "user-1",
+    "provider_id": "revenuecat",
+    "provider_event_id": "event-1",
+    "event_type": "purchase",
+    "occurred_at": "2026-05-31T20:45:00.000Z",
+    "metadata": {
+      "product_id": "pro_monthly"
+    }
+  },
+  "entitlement_snapshot": {
+    "schema_version": "entitlement_snapshot.v1",
+    "user_id": "user-1",
+    "status": "active",
+    "plan_id": "pro",
+    "source_ledger_entry_ids": [
+      "billing-entry-1"
+    ],
+    "effective_at": "2026-05-31T20:45:00.000Z",
+    "expires_at": "2026-06-30T20:45:00.000Z"
+  },
+  "entitlement_decision": {
+    "schema_version": "entitlement_decision.v1",
+    "decision_id": "decision-1",
+    "allowed": true,
+    "reason_code": "active_plan",
+    "policy_version": "entitlement-policy.v1",
+    "snapshot": {
+      "schema_version": "entitlement_snapshot.v1",
+      "user_id": "user-1",
+      "status": "active",
+      "plan_id": "pro",
+      "source_ledger_entry_ids": [
+        "billing-entry-1"
+      ],
+      "effective_at": "2026-05-31T20:45:00.000Z",
+      "expires_at": "2026-06-30T20:45:00.000Z"
+    }
+  },
+  "evidence_atom_view": {
+    "atom_id": "atom-1",
+    "source_id": "resume-source-1",
+    "text": "resilient APIs",
+    "evidence_spans": [
+      {
+        "schema_version": "evidence_span.v1",
+        "source_id": "resume-source-1",
+        "source_type": "resume",
+        "start_offset": 4,
+        "end_offset": 24,
+        "quote": "resilient APIs",
+        "metadata": {
+          "section": "experience"
+        }
+      }
+    ]
+  }
+}
