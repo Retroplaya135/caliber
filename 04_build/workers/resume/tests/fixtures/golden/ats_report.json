@@ -1,0 +1,40 @@
+{
+  "ats_test_matrix_version": "ats-matrix-2026-05-31.v1",
+  "document_id": "resume_bbc4ce818ffc3722",
+  "keyword_findings": [
+    {
+      "keyword": "Python",
+      "match_type": "exact",
+      "matched_text": "Python"
+    },
+    {
+      "keyword": "FastAPI",
+      "match_type": "exact",
+      "matched_text": "FastAPI"
+    },
+    {
+      "keyword": "Flutter",
+      "match_type": "exact",
+      "matched_text": "Flutter"
+    },
+    {
+      "keyword": "Kubernetes",
+      "match_type": "missing"
+    }
+  ],
+  "layout_risk_flags": [
+    {
+      "category": "layout",
+      "evidence": "tab or six-plus-space gap detected",
+      "id": "layout_columns_or_tabs",
+      "message": "Possible columns or tabbed layout can scramble ATS parser order.",
+      "severity": "high"
+    }
+  ],
+  "notes": [
+    "Deterministic report; no numeric ATS score is produced.",
+    "Matrix flags are parser-risk heuristics and must be AU-certified against black-box tests."
+  ],
+  "parser_risk_summary": "1 high parser risk(s), 0 medium parser risk(s).",
+  "schema_version": "resume-evidence-schema-2026-05-31.v1"
+}
