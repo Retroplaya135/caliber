@@ -1,0 +1,47 @@
+name: Guardrail CI
+
+on:
+  push:
+    branches:
+      - main
+      - integration
+      - 'lane/**'
+      - 'fork/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    name: Guardrail CI safety net
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Activate Melos
+        run: dart pub global activate melos
+
+      - name: Add pub cache to PATH
+        run: echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Analyze guardrails
+        run: melos run analyze
+
+      - name: Test guardrails with coverage
+        run: melos run test
+
+      - name: Build runner codegen check
+        run: melos run codegen
+
+      - name: Golden gateway and component harness
+        run: melos run golden
+
+      - name: Prove seeded failures bite
+        run: melos run seeded
